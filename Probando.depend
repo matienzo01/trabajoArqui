@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1618007330 source:c:\users\matias\desktop\matia\facu\arquitectura de computadoras\maquina virtual\probando\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+
