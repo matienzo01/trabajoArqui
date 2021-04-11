@@ -10,6 +10,8 @@ typedef struct {
 
 void cargaInstrucciones(nodo[]);
 
+int identificaBase(char);
+
 int main()
 {
     FILE* texto;
@@ -18,6 +20,7 @@ int main()
     int instruccionActual;
 
     cargaInstrucciones(instrucciones);
+    printf("%d", identificaBase('%'));
 
     //texto= fopen("datos.txt", "r");
     //archivoBinario= fopen("salida.bin", "wb");
@@ -60,4 +63,15 @@ void cargaInstrucciones(nodo instrucciones[CANTM]){
     instrucciones[23].clave=0xFB; strcpy(instrucciones[23].mnemonico, "NOT");
     instrucciones[24].clave=0xFF1; strcpy(instrucciones[24].mnemonico, "STOP");
 
+}
+
+int identificaBase(char dato){
+    char base[17]={'*','*','*','*','*','*','*','@','*','*','#','*','*','*','*','*','%'};
+    int i=0;
+
+    while(i<=strlen(base) && base[i]!=dato){
+        i++;
+    }
+
+    return i;
 }
