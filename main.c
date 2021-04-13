@@ -18,7 +18,7 @@ typedef struct{
     int numerodelinea;
 }registrorotulos;
 
-int traductor();
+int traductor(FILE*, FILE*);
 int buscamnemonico(char[]);
 void mayus(char[]);
 void cargarotulos(registrorotulos[],int*);
@@ -28,86 +28,50 @@ int tipodeargumento(char[]);
 int identificaBase(char);
 
 int main(){
+    FILE *instasm;
+    FILE *instbin;
 
-    traductor()?printf("\nTRADUCCION CORRECTA.\n"):printf("\nERROR.\n");
+    if((instasm=fopen("instrucciones.txt","r"))==NULL)   return 1;
+    traductor(instasm,instbin)?printf("\nTRADUCCION CORRECTA.\n"):printf("\nERROR.\n");
 
     return 0;
 }
 
-int traductor(){
-    FILE *instasm;
-    FILE *instbin;
+int traductor(FILE *instasm, FILE *instbin){
+    
     char linea[DIMS],cadena[DIMS];
-    int DS=-1,indicecadena,mnemonicoencontrado,argumentoscargados,cantargumentos,instruccionhexa,codigomnemo;
+    int DS=-1,indicecadena=-1,mnemonicoencontrado,argumentoscargados,cantargumentos,instruccionhexa,codigomnemo, j;
     registroinstruccion instruccion;
     registrorotulos rotulos[DIMS];
     int cantrotulos;
 
     cargarotulos(rotulos,&cantrotulos);
 
-    if((instasm=fopen("instrucciones.txt","r"))==NULL)
-        return 0;
+    
     while(fgets(linea,DIMS,instasm)!=NULL){
-        ++DS;//corregir
-        printf("\n Leyendo la linea %d del archivo. \n",DS);
-        mnemonicoencontrado=0;//equivale a que la linea sea una instruccion o simplemente una linea en blanco o comentario
-        indicecadena=-1;
-        for(int i=0;i<strlen(linea);i++){
-            if(linea[i]!=' ' || indicecadena==-1 || (cadena[0]==';' && !(linea[i]==' ' && linea[i+1]==' '))){
-                if(linea[i]!=' ' || indicecadena!=-1)
-                    cadena[++indicecadena]=linea[i];
-                cadena[indicecadena+1]='\0';//hacerlo de una manera mejor, inicializar la cadena de alguna forma 
-            }
-            else 
-            if(indicecadena!=-1){
+        
+        mnemonicoencontrado=argumentoscargados=cantargumentos=0;
+
+        for(int i=0; i<strlen(linea); i++){
+            
+            if(linea[i]!=' '){
                 if(!mnemonicoencontrado){
-                    if(cadena[indicecadena]==':'){
-                        strcpy(instruccion.rotulo,cadena);
-                        indicecadena=-1;
+                    
+                    instruccionhexa=0; //se escribira una nueva instruccion
+                    for(int j=i; j<=i+4; j++){ //todos los mnemonicos son de 4 carac o menos
+                        cadena[++indicecadena]=linea[j];
+                        
                     }
-                    else
-                        if(cadena[0]!=';')
-                        {//encontramos el mnemonico
-                        strcpy(instruccion.mnemonico,cadena);
-                        indicecadena=-1;
-                        mnemonicoencontrado=1;
-                        argumentoscargados=0;
-                        cantargumentos=0+(buscamnemonico(instruccion.mnemonico)<4080)+(buscamnemonico(instruccion.mnemonico)<240);
-                    }
+                    DS++; //como encontre una nueva instruccion aumento la cant de instrucciones
+                    instruccionhexa= buscamnemonico("MOV"); //<<24 & 0xFFF00000;
+                    printf("Pase por aca ");
+                    //cadena[++indicecadena]=' ';
+                    mnemonicoencontrado=1; //encontre el mnemonico
+                    printf("%x \n", instruccionhexa);
+                    
                 }
-                else
-                    if(argumentoscargados<cantargumentos && !(indicecadena==0 && cadena[indicecadena]==',')){
-                        if(cadena[indicecadena]==',')
-                            cadena[indicecadena]='\0';
-                        strcpy(instruccion.argumentos[argumentoscargados],cadena);
-                        indicecadena=-1;
-                        argumentoscargados++;
-                    }
-                    else{
-                        cadena[0]='\0';
-                        indicecadena=-1;
-                    }
             }
         }
-        if(indicecadena!=-1)//existia un comentario en la linea
-            strcpy(instruccion.comentario,cadena);
-
-        printf("[%04d]: %8s %8s , %-8s",DS,instruccion.mnemonico,instruccion.argumentos[0],instruccion.argumentos[1]);
-
-        codigomnemo=buscamnemonico(instruccion.mnemonico);
-        if(cantargumentos==0)
-            instruccionhexa=codigomnemo<<20 & 0xFFF00000;
-        else 
-            if(cantargumentos==1)
-                if (codigomnemo>240 && codigomnemo<248)
-                    instruccionhexa=codigomnemo<<24 & 0xFF000000 | 00<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | buscarotulo(instruccion.argumentos[0],rotulos,cantrotulos)  & 0x00000FFF;
-                else
-                    instruccionhexa=codigomnemo<<24 & 0xFF000000 | tipodeargumento(instruccion.argumentos[0])<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | buscaregistro(instruccion.argumentos[0]) & 0x00000FFF;
-            else
-                instruccionhexa=codigomnemo<<28 & 0xF0000000 | tipodeargumento(instruccion.argumentos[0])<<26 & 0x0C000000 | tipodeargumento(instruccion.argumentos[1])<<24 & 0x03000000 | buscaregistro(instruccion.argumentos[0])<<12 & 0x00FFF000 | buscaregistro(instruccion.argumentos[1])<<0 & 0x00000FFF;
-
-        printf("\nInstruccion Hexadecimal = %08x\n",instruccionhexa);
-
     }
     fclose(instasm);
 
@@ -115,14 +79,12 @@ int traductor(){
 }
 
 int buscamnemonico(char mnemonico[]){ //validar que la instruccion no exista???
-    nombre mnemonicos[25]={"MOV","ADD","SUB","SWAP","MUL","DIV","CMP","SHL","SHR","AND","OR","XOR","SYS","JMP","JZ","JP","JN","JNZ","JNP","JNN","LDL","LDH","RND","NOT","STOP"};
+    nombre mnemonicos[25]={"MOV","ADD","SUB ","SWAP","MUL ","DIV","CMP","SHL","SHR","AND","OR","XOR","SYS","JMP","JZ","JP","JN","JNZ","JNP","JNN","LDL","LDH","RND","NOT","STOP"};
     int i=0;
     mayus(mnemonico);
-    if(strcmp(mnemonico,"STOP")==0) return 4081;//o sino 0xFF1; se puede sacar esta linea agregando en el return final la condicion ="+(i>23)*3853"
-    while(strcmp(mnemonico,mnemonicos[i])!=0)
+    while(strcmp(mnemonico,mnemonicos[i])!=0 && i<=25)
         ++i;
-    //return i-(i>=12)*12+240*(i>=12); ABAJO SE SINTETIZA EN :
-    return i+(i>=12)*228;
+    return i+(i/12)*228+(i/24)*3061;
 }
 void mayus(char cadena[]){ //la idea era hacerla con return pero no la pude hacer funcionar bien
     for(int i=0;i<strlen(cadena);i++)
@@ -131,8 +93,8 @@ void mayus(char cadena[]){ //la idea era hacerla con return pero no la pude hace
 
 
 void cargarotulos(registrorotulos rotulos[],int *cantrotulos){
-    FILE *instasm;
     char linea[256];
+    FILE *instasm;
     char posiblerotulo[256];
     int numlinea=-1;
     int i;
