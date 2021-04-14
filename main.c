@@ -57,29 +57,30 @@ int traductor(FILE *instasm, FILE *instbin){
     
     while(fgets(linea,DIMS,instasm)!=NULL){
         i=0;
-        switch (pasoDeLectura)
-        {
-        case 0: //0:busca mnemonico (ver que onda si encuentra un rotulo)(termina cuando encuentra espacio)
-            while(linea[i]==' ')
-                i++;
-            while(linea[i]!=' ')
-                cadena[++j]=linea[i];
-            if(buscarotulo(rotulos, cadena)){ //busco a ver si lo que encontre es un rotulo o no
-                
-            }else{
-                instruccionhexa=0;
-                instruccionhexa= buscamnemonico(cadena)<<24 & 0xFFF00000;
-                pasoDeLectura=1;
-                DS++;
-            }
-            break;
-        case 1: //1 busca argumentos(finaliza con ; ,  ver que onda si son 2), 
-            break;
-        case 2: //2 busca comentario(finaliza con )
-            pasoDeLectura=0;
-            break;
-        
+        while(i!=DIMS){
+            switch (pasoDeLectura)
+            {
+            case 0: //0:busca mnemonico (ver que onda si encuentra un rotulo)(termina cuando encuentra espacio)
+                while(linea[i]==' ')
+                    i++;
+                while(linea[i]!=' ')
+                    cadena[++j]=linea[i];
+                if(!buscarotulo(rotulos, cadena)){ //busco a ver si lo que encontre es un rotulo o no. Si llega a ser un rotulo, va a salir del if y va a volver a analizar si i==DIMS, y como no cumple volvera a entrar al case 0
+                    instruccionhexa=0;
+                    instruccionhexa= buscamnemonico(cadena)<<24 & 0xFFF00000;
+                    pasoDeLectura=1;
+                    DS++;
+                }
+                break;
+            case 1: //1 busca argumentos(finaliza con ; ,  ver que onda si son 2), 
+                break;
+            case 2: //2 busca comentario(finaliza con )
+                pasoDeLectura=0;
+                break;
+            
         }
+        }
+        
     }
     fclose(instasm);
 
