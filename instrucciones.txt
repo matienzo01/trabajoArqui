@@ -1,4 +1,4 @@
-        MOV  [10] , 0 ;
-        ADD  [20] , [10] ;
-        ADD   [5] , 2 ;
-        JMP  ROTULO ;
+        MOV  
+        ADD  
+        ADD  
+        JMP  
