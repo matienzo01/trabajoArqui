@@ -22,28 +22,34 @@ typedef struct nodo{
 }nodo;
 typedef nodo* tlista;
 
+//proce y func para funcionar
 int traductor(FILE*, FILE*);
-int buscamnemonico(char[]);
-void mayus(char[]);
+
 void cargarotulos(tlista*);
 int buscarotulo(tlista,char[]);
+int buscamnemonico(char[]);
 int buscaregistro(char[]);
-int tipodeargumento(char[]);
-int identificaBase(char);
-void agregarotulo(tlista*,char[],int);
-void IniciaCadena(char[]);
 
-int main(){
+
+//proce y func auxiliares
+void mayus(char[]);
+int identificaBase(char);
+void IniciaCadena(char[]);
+void agregarotulo(tlista*,char[],int);
+int tipodeargumento(char[]);
+
+int main(){ //implementar parametro y si esta se tiene q imprimir
     FILE *instasm;
     FILE *instbin;
-    int numero;
+    /*int numero;
     char cadena[DIMS];
     strcpy(cadena, "STOP");
-
+    numero=buscamnemonico(cadena); //este bloque es para testeo de cosas
+    printf("%lx ", numero);*/ 
+    
     if((instasm=fopen("instrucciones.txt","r"))==NULL)   return 1;
     traductor(instasm,instbin)?printf("\nTRADUCCION CORRECTA.\n"):printf("\nERROR.\n");
-    //numero=buscamnemonico(cadena);
-    //printf("%lx ", numero);
+    
     return 0;
 }
 
@@ -51,11 +57,11 @@ int traductor(FILE *instasm, FILE *instbin){
     
     char linea[DIMS],cadena[DIMS]={'\0'};
     int DS=-1;
-    int instruccionhexa;
+    int instruccionhexa, cantArgumentos; //cantArgumentos va a definir cuantas veces debe permanecer en el case 1
     int pasoDeLectura=0, banderaFrena=0; 
     int i, j=-1; //i es indice de lectura y j de la cadena aux
     
-    registroinstruccion instruccion;
+    registroinstruccion instruccion; //ver como integrar esto
     tlista rotulos;
     int cantrotulos;
 
@@ -67,19 +73,31 @@ int traductor(FILE *instasm, FILE *instbin){
         while(i!=DIMS-1 && !banderaFrena){
             switch (pasoDeLectura)
             {
-            case 0: //0:busca mnemonico (ver que onda si encuentra un rotulo)(termina cuando encuentra espacio)
+            case 0: //0:busca mnemonico (termina cuando encuentra espacio)
                 while(i<DIMS && (linea[i]==' ' || linea[i]=='\n'))
                     i++;
-                if(i<DIMS-1){
+                if(i<DIMS-1){ //una linea puede ser solo un comentario, problema para el futuro
                     while(linea[i]!=' ')
                         cadena[++j]=linea[i++];
-                    if(!buscarotulo(rotulos, cadena)){ //busco a ver si lo que encontre es un rotulo o no. Si llega a ser un rotulo, va a salir del if y va a volver a analizar si i==DIMS, y como no cumple volvera a entrar al case 0
+                    if(!buscarotulo(rotulos, cadena)){ //busco si es un rotulo o no. Si es, va a salir del if y va a volver a analizar si i==DIMS, como no cumple volvera a entrar al case 0
                         instruccionhexa=0;
                         instruccionhexa= (buscamnemonico(cadena));
                         DS++;
+                        strcpy(instruccion.mnemonico, cadena);
                         //pasoDeLectura=1;
+                        if(instruccionhexa<=240){
+                            instruccionhexa=instruccionhexa<<28;
+                            cantArgumentos=2;
+                        }else if(instruccionhexa<=4080){
+                            instruccionhexa=instruccionhexa<<24;
+                            cantArgumentos=1;
+                        }else{
+                            instruccionhexa=instruccionhexa<<20;
+                            cantArgumentos=0;
+                        }
+                            
                         j=-1;
-                        printf("[%d] %4s %LX\n", DS,  cadena, instruccionhexa);
+                        printf("[%d] %4s %LX       tiene %d argumentos\n", DS,  instruccion.mnemonico, instruccionhexa, cantArgumentos);
                         if(strcmp(cadena,"STOP")==0)
                             banderaFrena=1;
                             else
@@ -116,15 +134,15 @@ int buscamnemonico(char mnemonico[]){
     while(i<=24 && strcmp(mnemonico,mnemonicos[i])!=0)
         ++i;
     if(i<=24)
-        aux= i+(i>=12)*228+(i>23)*3829;
+        return i+(i>=12)*228+(i>23)*3829;
     else
-        aux= 4095;
-    if(i<=11)
+        return 4095;
+    /*if(i<=11)
         return i<<28;
     else if(i<=22)
         return aux<<24;
     else
-        return aux<<20;
+        return aux<<20;*/
 }
 
 
@@ -165,7 +183,7 @@ int buscarotulo(tlista rotulos,char rotulo[]){
     int i=0;
     char aux[DIMS]; //auxiliar para agregarle el : sin modificar el original
     strcpy(aux, rotulo);
-    strcat(aux,":");// le agrega el : al rotulo leido como argumento para comparar.. ver otra forma mejor
+    strcat(aux,":");
     while(rotulos!=NULL && strcmp(aux,rotulos->rotulo)!=0)
         rotulos=rotulos->sig;
     if(rotulos!=NULL)//encontro el rotulo
@@ -228,7 +246,7 @@ int identificaBase(char dato){
             return 10; //si no hay nada es base 10
 }
 
-void mayus(char cadena[]){ //la idea era hacerla con return pero no la pude hacer funcionar bien
+void mayus(char cadena[]){ 
     for(int i=0;i<strlen(cadena);i++)
         cadena[i]=toupper(cadena[i]);
 }
