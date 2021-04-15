@@ -2,3 +2,4 @@
         ADD  
         ADD  
         JMP  
+        STOP

@@ -23,7 +23,7 @@ typedef struct nodo{
 typedef nodo* tlista;
 
 int traductor(FILE*, FILE*);
-long int buscamnemonico(char[]);
+int buscamnemonico(char[]);
 void mayus(char[]);
 void cargarotulos(tlista*);
 int buscarotulo(tlista,char[]);
@@ -38,11 +38,12 @@ int main(){
     FILE *instbin;
     int numero;
     char cadena[DIMS];
-    strcpy(cadena, "ADD");
+    strcpy(cadena, "STOP");
 
     if((instasm=fopen("instrucciones.txt","r"))==NULL)   return 1;
     traductor(instasm,instbin)?printf("\nTRADUCCION CORRECTA.\n"):printf("\nERROR.\n");
-    //printf("%x ", buscamnemonico(cadena)<<28);
+    //numero=buscamnemonico(cadena);
+    //printf("%lx ", numero);
     return 0;
 }
 
@@ -50,8 +51,8 @@ int traductor(FILE *instasm, FILE *instbin){
     
     char linea[DIMS],cadena[DIMS]={'\0'};
     int DS=-1;
-    long int instruccionhexa;
-    int pasoDeLectura=0; 
+    int instruccionhexa;
+    int pasoDeLectura=0, banderaFrena=0; 
     int i, j=-1; //i es indice de lectura y j de la cadena aux
     
     registroinstruccion instruccion;
@@ -63,7 +64,7 @@ int traductor(FILE *instasm, FILE *instbin){
     
     while(fgets(linea,DIMS,instasm)!=NULL){
         i=0;
-        while(i!=DIMS-1){
+        while(i!=DIMS-1 && !banderaFrena){
             switch (pasoDeLectura)
             {
             case 0: //0:busca mnemonico (ver que onda si encuentra un rotulo)(termina cuando encuentra espacio)
@@ -78,8 +79,11 @@ int traductor(FILE *instasm, FILE *instbin){
                         DS++;
                         //pasoDeLectura=1;
                         j=-1;
-                        printf("%s %LX\n", cadena, instruccionhexa);
-                        IniciaCadena(cadena);
+                        printf("[%d] %4s %LX\n", DS,  cadena, instruccionhexa);
+                        if(strcmp(cadena,"STOP")==0)
+                            banderaFrena=1;
+                            else
+                            IniciaCadena(cadena);
 
                     }
                 }
@@ -102,24 +106,25 @@ int traductor(FILE *instasm, FILE *instbin){
     return 1;
 }
 
-long int buscamnemonico(char mnemonico[]){
+int buscamnemonico(char mnemonico[]){
     nombre mnemonicos[25]={"MOV","ADD","SUB","SWAP","MUL","DIV","CMP","SHL","SHR","AND","OR","XOR","SYS","JMP","JZ","JP","JN","JNZ","JNP","JNN","LDL","LDH","RND","NOT","STOP"};
-    long int i=0;
+    int i=0;
+    long int aux;
 
     mayus(mnemonico);
 
     while(i<=24 && strcmp(mnemonico,mnemonicos[i])!=0)
         ++i;
     if(i<=24)
-        i= i+(i>=12)*228+(i>23)*3829;
+        aux= i+(i>=12)*228+(i>23)*3829;
     else
-        i= 4095;
+        aux= 4095;
     if(i<=11)
         return i<<28;
     else if(i<=22)
-        return i<<24;
+        return aux<<24;
     else
-        return i<<20;
+        return aux<<20;
 }
 
 
