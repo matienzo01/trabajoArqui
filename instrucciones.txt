@@ -1,5 +1,5 @@
-        MOV  
-        ADD  
-        ADD  
+        MOV  [10] , 0;
+        ADD  [20] , [10];
+ROTULO: ADD  [5]  , 2;
         JMP  
         STOP
