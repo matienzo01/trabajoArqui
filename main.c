@@ -194,7 +194,7 @@ void mayus(char cadena[]){
 
 int basebtodecimal(char cadena[],int baseb){
     int numero=0;
-    for(int i=0;i<strlen(cadena);i++)
+    for(int i=1;i<strlen(cadena);i++)
         numero+=((int)cadena[i]-48)*potencia(baseb,strlen(cadena)-(i+1));
     return numero;
 }
