@@ -1,8 +1,8 @@
---> Poner el main con argumentos y ver como funciona todo eso
+
 --> Controlar los Warnings sobre truncado de operandos, ver en que parte del codigo se debe implementar
 --> Ver que hacer si en la lectura hay un comentario solo o una linea en blanco
 --> Armar instruccion en hexadecimal (esta casi hecho, hay que ver el caso de los operandos como JMP o JZ o JP, controlar si en el argumento tiene una linea o un rotulo
---> Cuando pongamos los argumentos del main, creo que los FILE* de todo el programa habria que sacarlos y modificar un poco eso (por ejemplo en el cargarotulos o en el mismo main)
+
 
 
 --> Controlar estas cosas de la lectura:
@@ -15,3 +15,9 @@
         -> si existe o no rotulo para poner rotulo o numlinea
         -> cantidad de argumentos para alinearlos y poner por ejemplo : %10s o %5s o %-15s.... El comentario tambien alinearlo
         -> el punto y coma no tiene que estar si o si en todas las intruccione creo, solo en las que tienen comentario
+
+
+COSAS HECHAS (MOVI ACA ABAJO LAS COSAS Q HICE PARA Q LAS VEAS, DESPUES DE LAS VEAS, BORRALAS)
+
+--> Poner el main con argumentos y ver como funciona todo eso
+--> Cuando pongamos los argumentos del main, creo que los FILE* de todo el programa habria que sacarlos y modificar un poco eso (por ejemplo en el cargarotulos o en el mismo main)--> no hay que sacar las variables sino que en el fopen poner el nombre de la variable, no me fije si funciona (te lo explique en un audio, y sino, mandame q te lo explico)

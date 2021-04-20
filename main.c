@@ -10,7 +10,7 @@ typedef char nombre[MAX];
 typedef struct{
     char rotulo[DIMS];
     char mnemonico[MAX];
-    int argumentos[3];
+    int argumentos[4];
     char comentario[DIMS];
 }registroinstruccion;
 
@@ -22,58 +22,56 @@ typedef struct nodo{
 typedef nodo* tlista;
 
 //proce y func para funcionar
-int traductor(FILE*,int[],int*);
+int traductor(FILE*,int[],int, char[], int*);
 
-void cargarotulos(tlista*);
+void cargarotulos(tlista*, char[]);
 int buscarotulo(tlista,char[]);
 int buscamnemonico(char[]);
 int buscaargumento(char[]);
 int buscaregistro(char[]);
+void imprimeLineas(registroinstruccion, int, int, int);
 
 
 //proce y func auxiliares
-void mayus(char[]);
 int identificaBase(char);
-void IniciaCadena(char[]);
 void agregarotulo(tlista*,char[],int);
 int codigooperando(char[]);
 int basebtodecimal(char[],int);
 int potencia(int,int);
+void mayus(char[]);
 
 
-int main(){ //implementar parametro y si esta se tiene q imprimir
+int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q imprimir
     FILE *instasm;
     FILE *instbin;
-    int memoria[4096];
-    int errores;
+    int memoria[4096], parametro;
+    int errores=97;
+    char aux[DIMS]={'\0'};
     
-    if((instasm=fopen("instrucciones.txt","r"))==NULL) 
+    if((instasm=fopen("instrucciones.txt","r"))==NULL) //if((instasm=fopen(argv[1],"r"))==NULL) 
         return 1;
-    traductor(instasm,memoria,&errores)?printf("\nTRADUCCION CORRECTA.\n"):printf("\nERROR.\n");
-
-    //if(errores==0)
-    //    generobin(memoria);
-    //else
-    //    printf("No se llevo a cabo la traudccion porque hubieron %d errores.\n",errores);
-
-
+    //parametro= (strcmp(argv[1],"-o")==0)? 1:0;
+    traductor(instasm, memoria, parametro, argv[1], &errores)?printf("\nTRADUCCION CORRECTA.\n"):printf("\nERROR.\n");
+    
+    
     return 0;
 }
 
-int traductor(FILE *instasm,int memoria[],int *errores){
+int traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* errores){
     
     char linea[DIMS],cadena[DIMS]={'\0'};
     int DS=-1;
     int cantArgumentos; //cantArgumentos va a definir cuantas veces debe permanecer en el case 1
     int pasoDeLectura=0; 
     int i, j=-1; //i es indice de lectura y j de la cadena aux
+    int instruccionHexa;
     
     registroinstruccion instruccion;
     tlista rotulos;
 
     int argumentosCargados,codmnemo;
 
-    cargarotulos(&rotulos);
+    cargarotulos(&rotulos, archivo);
 
     while(fgets(linea,DIMS,instasm)!=NULL){
         strcpy(instruccion.comentario,"\0");
@@ -91,12 +89,11 @@ int traductor(FILE *instasm,int memoria[],int *errores){
                             if(buscarotulo(rotulos,cadena)==0xFFF){//es un mnemonico
                                 ++DS;
                                 strcpy(instruccion.mnemonico,cadena);
-                                printf("MNEMONICO = %s \n",instruccion.mnemonico);
                                 codmnemo=buscamnemonico(cadena);
                                 if(codmnemo!=0xFFF){
                                     argumentosCargados=0;
-                                    cantArgumentos=(codmnemo<4080)+(codmnemo<240);    
-                                    printf(" Cant Argumentos = %d \n",cantArgumentos);      
+                                    cantArgumentos=(codmnemo<4080)+(codmnemo<240);
+                                    instruccionHexa=codmnemo<<(20+cantArgumentos*4);          
                                 }
                                 else//error, se puso un mnemonico que no existe
                                     ++(*errores);
@@ -110,12 +107,14 @@ int traductor(FILE *instasm,int memoria[],int *errores){
                         break;
                     case 1: // se buscan el o los argumentos... habia un "i++" para que sirve??
                         if(argumentosCargados < cantArgumentos){
-                            instruccion.argumentos[++argumentosCargados]=buscaargumento(cadena);
-                            printf(" ARGUMENTO %d = %d ",argumentosCargados,instruccion.argumentos[argumentosCargados]);
+                            instruccion.argumentos[argumentosCargados]=buscaargumento(cadena);
+                            instruccion.argumentos[argumentosCargados+2]=codigooperando(cadena);
+                            argumentosCargados++;
                             memset(cadena,0,strlen(cadena));
                         }
                         else 
                             pasoDeLectura=2;
+                            
                         break;
                     case 2: //2 busca comentario(, tambien habia un i++ ...
                         if(i<strlen(linea))
@@ -125,7 +124,9 @@ int traductor(FILE *instasm,int memoria[],int *errores){
             }
             ++i;//puse aca el i++ pero nose cualquiera mande para ver si andaba
         }   
-        printf("\n\n [%04d] %s %d %d \n\n",DS,instruccion.mnemonico,instruccion.argumentos[0],instruccion.argumentos[1]);
+        //printf("\n\n [%04d] %s %d %d \n\n",DS,instruccion.mnemonico,instruccion.argumentos[0],instruccion.argumentos[1]);
+        imprimeLineas(instruccion, DS, cantArgumentos, 0);
+        memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
         //if(*errores==0)
             //armoinstruccionhexa(memoria,instruccion); y la paso al vector memoria
     }
@@ -186,11 +187,6 @@ int identificaBase(char dato){
     else
         return 99;//si no tenia ningun simbolo, y tampoco era directamente el numero en decimal, entonces era un caracter entre comillas
 }
-void mayus(char cadena[]){ 
-    for(int i=0;i<strlen(cadena);i++)
-        cadena[i]=toupper(cadena[i]);
-}
-
 
 int basebtodecimal(char cadena[],int baseb){
     int numero=0;
@@ -225,7 +221,8 @@ void agregarotulo(tlista *rotulos,char rotulo[],int numlinea){
     aux->numerodelinea=numlinea;
     *rotulos=aux;
 }
-void cargarotulos(tlista *rotulos){
+
+void cargarotulos(tlista *rotulos, char archivo[]){
     FILE *instasm;
     char linea[256];
     char posiblerotulo[256];
@@ -234,7 +231,7 @@ void cargarotulos(tlista *rotulos){
     int indice;
     *rotulos=NULL;
     
-    instasm=fopen("instrucciones.txt","r");
+    instasm=fopen("instrucciones.txt","r");//fopen(archivo,"r");
     while(fgets(linea,256,instasm)!=NULL){
         ++numlinea;
         i=0;
@@ -261,4 +258,80 @@ int buscarotulo(tlista rotulos,char rotulo[]){
         return rotulos->numerodelinea;
     else
         return 0xFFF;
+}
+
+void mayus(char cadena[]){
+    for(int i=0; i<strlen(cadena); i++)
+        cadena[i]=toupper(cadena[i]);
+}
+
+void imprimeLineas(registroinstruccion instruccion, int DS, int cantidadArgumetos, int instruccionHexa){
+    char aux[DIMS]={'\0'};
+    char cadena[DIMS]={'\0'};
+    int indice, j;
+
+    printf("[%04d]:",DS);
+    for(int i=0; i<12; i++){//aca falta agregar la impresion en hexa, agrego los espacios q ocuparian
+        printf(" ");
+    }
+    
+    if(strlen(instruccion.rotulo)!=0){
+        strcpy(cadena, instruccion.rotulo);
+        indice=strlen(cadena);
+    }
+    else{
+        itoa(DS+1, cadena, 10);
+        indice=strlen(cadena);
+        cadena[indice]=':';
+        indice++;
+    }
+    
+
+    j=19; //despues de todo lo de la izquierda quedan un total de 19 espacios
+
+    while(j<32-indice){
+        printf(" ");
+        j++;
+    }
+
+    printf("%s ", cadena);
+    printf("%s ", instruccion.mnemonico);
+    j+=strlen(instruccion.mnemonico)+strlen(cadena); //setea el indice luego del mnemonico
+
+    memset(cadena, 0, strlen(cadena));
+    
+    for(int i=0; i<cantidadArgumetos; i++){
+        if(i==1) //esta linea solo se ejecuta si hay 2 argumentos
+            printf(", ");
+        switch (instruccion.argumentos[i+2])//segun  el tipo del parametro
+        {
+        case 0: //inmediato
+            itoa(instruccion.argumentos[i], aux, 10);
+            if(i==0)
+                while(j<46-strlen(aux)){ //el menos 2 son los dos corchetes
+                    j++;
+                    printf(" ");
+                }
+            printf("%s", aux);
+            memset(aux, 0, strlen(aux));
+            break;
+        case 1: //de registro
+            
+            break;
+        case 2: //directo
+            itoa(instruccion.argumentos[i], aux, 10);
+            if(i==0)
+                while(j<46-strlen(aux)-2){ //el menos 2 son los dos corchetes
+                    j++;
+                    printf(" ");
+                }
+            printf("[%s]", aux);
+            memset(aux, 0, strlen(aux));
+            break;
+        }
+    }
+
+    printf("%s\n", aux);
+    
+    
 }
