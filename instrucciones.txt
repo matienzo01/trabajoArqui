@@ -1,5 +1,5 @@
-        MOV  [10] , 0;
-        SWAP  [20] , [10];
-ROTULO: ADD  [5]  , 27;
-        JMP  0
+        MOV  [10], 0;
+        SWAP  [20],       [10];
+ROTULO: ADD  [5]       ,27;
+        JMP             ROTULO
         STOP

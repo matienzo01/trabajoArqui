@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#define DIMS 30
+#define DIMS 50
 #define MAX 5
 
 typedef char nombre[MAX];
@@ -27,9 +27,9 @@ int traductor(FILE*,int[],int, char[], int*);
 void cargarotulos(tlista*, char[]);
 int buscarotulo(tlista,char[]);
 int buscamnemonico(char[]);
-int buscaargumento(char[]);
+int buscaargumento(char[], tlista);
 int buscaregistro(char[]);
-void imprimeLineas(registroinstruccion, int, int, int);
+void imprimeLineas(registroinstruccion, int, int, int, tlista);
 
 
 //proce y func auxiliares
@@ -39,9 +39,10 @@ int codigooperando(char[]);
 int basebtodecimal(char[],int);
 int potencia(int,int);
 void mayus(char[]);
+void imprimeRotulo(tlista, int, int);
 
 
-int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q imprimir
+int main(int argc, char* argv[]){ 
     FILE *instasm;
     FILE *instbin;
     int memoria[4096], parametro;
@@ -50,8 +51,9 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
     
     if((instasm=fopen("instrucciones.txt","r"))==NULL) //if((instasm=fopen(argv[1],"r"))==NULL) 
         return 1;
+    printf("%x",2<<1);
     //parametro= (strcmp(argv[1],"-o")==0)? 1:0;
-    traductor(instasm, memoria, parametro, argv[1], &errores)?printf("\nTRADUCCION CORRECTA.\n"):printf("\nERROR.\n");
+    //traductor(instasm, memoria, parametro, argv[1], &errores)?printf("\nTRADUCCION CORRECTA.\n"):printf("\nERROR.\n");
     
     
     return 0;
@@ -64,7 +66,7 @@ int traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* erro
     int cantArgumentos; //cantArgumentos va a definir cuantas veces debe permanecer en el case 1
     int pasoDeLectura=0; 
     int i, j=-1; //i es indice de lectura y j de la cadena aux
-    int instruccionHexa;
+    int instruccionHexa, hexaAux;
     
     registroinstruccion instruccion;
     tlista rotulos;
@@ -74,7 +76,9 @@ int traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* erro
     cargarotulos(&rotulos, archivo);
 
     while(fgets(linea,DIMS,instasm)!=NULL){
-        strcpy(instruccion.comentario,"\0");
+        //strcpy(instruccion.comentario,"\0");
+        memset(instruccion.comentario,0,strlen(instruccion.comentario));
+        memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
         pasoDeLectura=0;
         i=0;
         while(i<strlen(linea)){
@@ -105,10 +109,27 @@ int traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* erro
                                 memset(cadena,0,strlen(cadena));
                             }
                         break;
-                    case 1: // se buscan el o los argumentos... habia un "i++" para que sirve??
+                    case 1: //aca habria q entrar a fijarse el warning
                         if(argumentosCargados < cantArgumentos){
-                            instruccion.argumentos[argumentosCargados]=buscaargumento(cadena);
-                            instruccion.argumentos[argumentosCargados+2]=codigooperando(cadena);
+                            hexaAux=0;
+                            instruccion.argumentos[argumentosCargados+2]= hexaAux= codigooperando(cadena);
+                            if(cantArgumentos==2){
+                                switch (hexaAux)
+                                {
+                                case 1:
+                                    hexaAux=hexaAux<<26;
+                                    break;
+                                case 2:
+                                    break;
+                                default:
+                                    break;
+                                }
+                            }else{
+
+                            }
+                            instruccion.argumentos[argumentosCargados]= hexaAux= buscaargumento(cadena, rotulos);
+                            
+                            //cargamos el tipo y el operando en el hexa
                             argumentosCargados++;
                             memset(cadena,0,strlen(cadena));
                         }
@@ -124,8 +145,7 @@ int traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* erro
             }
             ++i;//puse aca el i++ pero nose cualquiera mande para ver si andaba
         }   
-        //printf("\n\n [%04d] %s %d %d \n\n",DS,instruccion.mnemonico,instruccion.argumentos[0],instruccion.argumentos[1]);
-        imprimeLineas(instruccion, DS, cantArgumentos, 0);
+        imprimeLineas(instruccion,DS, cantArgumentos, instruccionHexa, rotulos);
         memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
         //if(*errores==0)
             //armoinstruccionhexa(memoria,instruccion); y la paso al vector memoria
@@ -135,12 +155,17 @@ int traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* erro
     return 1;
 }
 
-int buscaargumento(char argumento[]){
-    int i=0,baseb;
+int buscaargumento(char argumento[], tlista rotulos){
+    int i=0,baseb, j;
     char aux[20];
     mayus(argumento);
-    if(argumento[0]>='A' && argumento[0]<='Z')
-        return buscaregistro(argumento);
+    if(argumento[0]>='A' && argumento[0]<='Z'){
+        j=buscaregistro(argumento);
+        if(j==17){ //no era un registro sino un rotulo
+            return buscarotulo(rotulos, argumento);
+        }else
+            return i;
+    }       
     else{
         if(argumento[0]=='[')
             for(int i=1;i<strlen(argumento)-1;i++)
@@ -160,17 +185,18 @@ int buscaargumento(char argumento[]){
 int buscaregistro(char registro[]){
     int i=0;
     nombre registros[16]={"DS","\0","\0","\0","\0","IP","\0","\0","CC","AC","AX","BX","CX","DX","EX","FX"};
-    while(strcmp(registro,registros[i])!=0)
+    while(i<=16 && strcmp(registro,registros[i])!=0)
         ++i;
     return i;
 }
 
 int codigooperando(char argumento[]){ /*devuelve el codigo del operando */
-    if(argumento[0]=='[')
+    if(argumento[0]=='[') //directo
         return 2;
     else
-        if(argumento[0]>='A' && argumento[0]<='Z')
-            return 1;
+        if(argumento[0]>='A' && argumento[0]<='Z'){ //lo explico en imprimeLinea
+            return (buscaregistro(argumento)==17)? 3:1;
+        } 
         else
             return 0;
 }
@@ -242,15 +268,19 @@ void cargarotulos(tlista *rotulos, char archivo[]){
             posiblerotulo[indice+1]='\0';
             ++i;
         }
-        if(posiblerotulo[indice]==':')
+        if(posiblerotulo[indice]==':'){
+            posiblerotulo[indice]='\0';
             agregarotulo(rotulos,posiblerotulo,numlinea);
+        }
+            
     }
     fclose(instasm);
 }
 int buscarotulo(tlista rotulos,char rotulo[]){
-    char aux[DIMS];
-    if(rotulo[strlen(rotulo)]!=':'){
-        strcpy(aux,rotulo);    
+    char aux[DIMS]={'\0'};
+    strcpy(aux,rotulo); 
+    if(aux[strlen(aux)-1]==':'){
+        aux[strlen(aux)-1]='\0';   
     }
     while(rotulos!=NULL && strcmp(aux,rotulos->rotulo)!=0)
         rotulos=rotulos->sig;
@@ -260,20 +290,33 @@ int buscarotulo(tlista rotulos,char rotulo[]){
         return 0xFFF;
 }
 
+void imprimeRotulo(tlista rotulos, int numeroLinea, int j){
+    while(rotulos!=NULL && rotulos->numerodelinea!=numeroLinea)
+        rotulos=rotulos->sig;
+    if(rotulos!=NULL){
+        while(j<46-strlen(rotulos->rotulo)){ 
+            j++;
+            printf(" ");
+        }
+        printf("%s", rotulos->rotulo);
+    }
+        
+}
+
 void mayus(char cadena[]){
     for(int i=0; i<strlen(cadena); i++)
         cadena[i]=toupper(cadena[i]);
 }
 
-void imprimeLineas(registroinstruccion instruccion, int DS, int cantidadArgumetos, int instruccionHexa){
+void imprimeLineas(registroinstruccion instruccion, int DS, int cantidadArgumetos, int instruccionHexa, tlista rotulos){
     char aux[DIMS]={'\0'};
     char cadena[DIMS]={'\0'};
     int indice, j;
 
-    printf("[%04d]:",DS);
-    for(int i=0; i<12; i++){//aca falta agregar la impresion en hexa, agrego los espacios q ocuparian
-        printf(" ");
-    }
+    printf("[%04d]: ",DS);
+    //aca falta agregar la impresion en hexa, agrego los espacios q ocuparian
+    printf("%02X %02X %02X %02X", instruccionHexa>>24 & 0xFF, instruccionHexa>>16 & 0xFF, instruccionHexa>>8 & 0xFF);
+    
     
     if(strlen(instruccion.rotulo)!=0){
         strcpy(cadena, instruccion.rotulo);
@@ -285,7 +328,6 @@ void imprimeLineas(registroinstruccion instruccion, int DS, int cantidadArgumeto
         cadena[indice]=':';
         indice++;
     }
-    
 
     j=19; //despues de todo lo de la izquierda quedan un total de 19 espacios
 
@@ -328,10 +370,13 @@ void imprimeLineas(registroinstruccion instruccion, int DS, int cantidadArgumeto
             printf("[%s]", aux);
             memset(aux, 0, strlen(aux));
             break;
+        case 3: //nuevo tipo inventado que bautizo POR REFERENCIA (solo importa para la impresion)
+            imprimeRotulo(rotulos, instruccion.argumentos[i], j);
+            break;
         }
     }
-
-    printf("%s\n", aux);
+    printf("\n");
+    //aca se imprimiria el comentario
     
     
 }

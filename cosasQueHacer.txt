@@ -1,23 +1,25 @@
 
 --> Controlar los Warnings sobre truncado de operandos, ver en que parte del codigo se debe implementar
 --> Ver que hacer si en la lectura hay un comentario solo o una linea en blanco
---> Armar instruccion en hexadecimal (esta casi hecho, hay que ver el caso de los operandos como JMP o JZ o JP, controlar si en el argumento tiene una linea o un rotulo
+--> Armar instruccion en hexadecimal (esta casi hecho, hay que ver el caso de los operandos como JMP o JZ o JP
 
-
-
---> Controlar estas cosas de la lectura:
-    -> Muchos espacios y/o tabulaciones entre partes de la instruccion
-    -> Contemplar que los argumentos no esten asi : ADD [2] , 3 ; y que esten asi : ADD [2],3; , creo que ese caso no funciona
-    
-    
 --> Impresion por pantalla si esta el -o como argumento : ((Pagina 10 del PDF))
     ->seria un printf con los formatos para que qude alineado pero teniendo en cuenta que:::
-        -> si existe o no rotulo para poner rotulo o numlinea
-        -> cantidad de argumentos para alinearlos y poner por ejemplo : %10s o %5s o %-15s.... El comentario tambien alinearlo
         -> el punto y coma no tiene que estar si o si en todas las intruccione creo, solo en las que tienen comentario
 
 
 COSAS HECHAS (MOVI ACA ABAJO LAS COSAS Q HICE PARA Q LAS VEAS, DESPUES DE LAS VEAS, BORRALAS)
 
+Antes que nada, me declaro fan #1 de la funcion memset, hace la vida mucho mas bella, ahora si, los cambios que hice
+
 --> Poner el main con argumentos y ver como funciona todo eso
---> Cuando pongamos los argumentos del main, creo que los FILE* de todo el programa habria que sacarlos y modificar un poco eso (por ejemplo en el cargarotulos o en el mismo main)--> no hay que sacar las variables sino que en el fopen poner el nombre de la variable, no me fije si funciona (te lo explique en un audio, y sino, mandame q te lo explico)
+--> argumentos del main, creo que los FILE* de todo el programa habria que sacarlos y modificar un poco eso--> no hay que sacar las variables sino que en el fopen poner el nombre de la variable, no me fije si funciona (te lo explique en un audio, y sino, mandame q te lo explico)
+--> Armar instruccion en hexadecimal (esta casi hecho, hay que ver el caso de los operandos como JMP o JZ o JP, controlar si en el argumento tiene una linea o un rotulo --> ya hice lo de que tiene rotulo, falta armar bien los hexa
+
+--> Controlar estas cosas de la lectura: -->hice varias pruebas, hace todavia mas vos. Al principio tuve problemas pero se solucionaron agrandando la const DIMS y/o con <3 memset <3 (son corazones)
+    -> Muchos espacios y/o tabulaciones entre partes de la instruccion
+    -> Contemplar que los argumentos no esten asi : ADD [2] , 3 ; y que esten asi : ADD [2],3; , creo que ese caso no funciona
+
+de la impresion
+    -> si existe o no rotulo para poner rotulo o numlinea 
+    -> cantidad de argumentos para alinearlos y poner por ejemplo : %10s o %5s o %-15s.... El comentario tambien alinearlo ->estan hechas con cuentas de dudosa rigurosidad cientifica, fijate si dan bien o se te ocurre una mejor forma
