@@ -38,7 +38,7 @@ int buscaregistro(char[]);
 void imprimeLineas(registroinstruccion,int,int,int,int,int);
 void generainstruccion(int,registroinstruccion,int*,int,tlista,int*,int*,int,tlistastring*,tlistastring*);
 void agregainforme(tlistastring*,char[],int,char[],char[]);
-void generabin(int[],FILE*,int);
+void generabin(int[], char[], FILE*,int);
 
 
 //proce y func auxiliares
@@ -58,16 +58,29 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
     int memoria[4096],maxmem,parametro;
     int errores=0,warnings=0;
     char aux[DIMS]={'\0'};
-    
-    /*if((instasm=fopen("instrucciones.txt","r"))==NULL)*/ if((instasm=fopen(argv[1],"r"))==NULL) 
+
+    if(argc<3){ //si no le meti el archivo para levantar y/o el a generar, finaliza la ejecucucion
+        printf("Cantidad de parametros minimos insuficientes");
         return 1;
-    parametro= (strcmp(argv[3],"-o")==0)? 1:0;
+    }else if(argc>4){
+        printf("Exceso de parametros");
+        return 1;
+    }
+    
+    if((instasm=fopen(argv[1],"r"))==NULL) 
+        return 1;
+    
+    if(argc==3) //si solamente viene con los nombres de los archivos
+        parametro=0;
+    else
+        parametro= (strcmp(argv[3],"-o")==0)? 1:0; //chequea si tiene el -o
+
     traductor(instasm,memoria,parametro,argv[1],&errores,&warnings,&informeserrores,&informeswarnings,&maxmem)?printf("\nTRADUCCION CORRECTA.\n"):printf("\nERROR.\n");
     
     printf("Errores = %d \n",errores);
     muestralista(informeserrores);
     if(errores==0)
-        generabin(memoria,instbin,maxmem);
+        generabin(memoria, argv[2],instbin,maxmem);
     else
         printf("No se genero el archivo Programa Codigo Maquina ya que hubo errores en la traduccion.\n");
     printf("Warnings = %d \n",warnings);
@@ -173,9 +186,9 @@ int traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* erro
     return 1;
 }
 
-void generabin(int memoria[],FILE *instabin,int maxmem){
+void generabin(int memoria[],char nombre[],FILE *instabin,int maxmem){
     int DS;//este vendria desde el main
-    instabin=fopen("binario.bin","wb");
+    instabin=fopen(nombre,"wb");
     if(instabin!=NULL) 
         for(int i=0;i<maxmem;i++)
             fwrite((memoria+i),sizeof(memoria[i]),1,instabin);
