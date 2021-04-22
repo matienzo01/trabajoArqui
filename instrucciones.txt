@@ -1,5 +1,13 @@
-        MOV  [%10] , 0;
-        ADD  [20] , [10];
-ROTULO: ADD  [5]  , 27;
-        JMP  
-        STOP
+                                mov [10], 0 ;inicializo variables
+         mov                   [20],    1
+OTRO:   cmp [20], 100 ;compara
+        jp fin ;salta si llego a 100 o mas
+                        ;probando linea de solo comentario
+        swap [10],              [20]
+        add [20], [10]
+                mov AX, %001
+        mov CX, 1
+                        mov DX, 10
+        sys 2 ;print [10] en decimal
+        jmp otro
+FIN:    stop
