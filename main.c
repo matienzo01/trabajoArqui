@@ -28,7 +28,7 @@ typedef struct nodo{
 typedef nodo* tlista;
 
 //proce y func para funcionar
-int traductor(FILE*,int[],int,char[],int*,int*,tlistastring*,tlistastring*,int*);
+void traductor(FILE*,int[],int,char[],int*,int*,tlistastring*,tlistastring*,int*);
 
 void cargarotulos(tlista*, char[]);
 int buscarotulo(tlista,char[]);
@@ -75,14 +75,16 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
     else
         parametro= (strcmp(argv[3],"-o")==0)? 1:0; //chequea si tiene el -o
 
-    traductor(instasm,memoria,parametro,argv[1],&errores,&warnings,&informeserrores,&informeswarnings,&maxmem)?printf("\nTRADUCCION CORRECTA.\n"):printf("\nERROR.\n");
+    traductor(instasm,memoria,parametro,argv[1],&errores,&warnings,&informeserrores,&informeswarnings,&maxmem);
     
     printf("Errores = %d \n",errores);
     muestralista(informeserrores);
-    if(errores==0)
+    if(errores==0){
         generabin(memoria, argv[2],instbin,maxmem);
+        printf("Se genero el binario con nombre %s\n", argv[2]);
+    }
     else
-        printf("No se genero el archivo Programa Codigo Maquina ya que hubo errores en la traduccion.\n");
+        printf("No se genero el archivo %s ya que hubo errores en la traduccion.\n", argv[2]);
     printf("Warnings = %d \n",warnings);
     muestralista(informeswarnings);
 
@@ -90,7 +92,7 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
     return 0;
 }
 
-int traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* errores,int *warnings,tlistastring *informeserrores,tlistastring *informeswarnings,int *maxmem){
+void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* errores,int *warnings,tlistastring *informeserrores,tlistastring *informeswarnings,int *maxmem){
     
     char linea[DIMS],cadena[DIMS]={'\0'};
     int DS=-1;
@@ -183,7 +185,6 @@ int traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* erro
     }
     *maxmem=DS;
     fclose(instasm);
-    return 1;
 }
 
 void generabin(int memoria[],char nombre[],FILE *instabin,int maxmem){
@@ -224,8 +225,10 @@ void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *inst
                 }
                 *instruccionhexa=codigomnemo<<24 & 0xFF000000 | 00<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | linearotulo & 0x00000FFF;
             }
-            else
-                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | codoperando[0]<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | args[0] & 0x00000FFF;
+            else if(codigomnemo==0xF0)
+                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | args[0] & 0x00000FFF;
+                else
+                    *instruccionhexa=codigomnemo<<24 & 0xFF000000 | codoperando[0]<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | args[0] & 0x00000FFF;
         else
             *instruccionhexa=codigomnemo<<28 & 0xF0000000 | codoperando[0]<<26 & 0x0C000000 | codoperando[1]<<24 & 0x03000000 | args[0]<<12 & 0x00FFF000 | args[1] & 0x00000FFF;
 }

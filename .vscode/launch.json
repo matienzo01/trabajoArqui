@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
-            "args": [],
+            "args": ["instrucciones.txt","cacho.bin","-o"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],
