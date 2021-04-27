@@ -71,9 +71,9 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
         return 1;
     
     if(argc==3) //si solamente viene con los nombres de los archivos
-        parametro=0;
+        parametro=1;
     else
-        parametro= (strcmp(argv[3],"-o")==0)? 1:0; //chequea si tiene el -o
+        parametro= (strcmp(argv[3],"-o")==0)? 0:1; //chequea si tiene el -o
 
     traductor(instasm,memoria,parametro,argv[1],&errores,&warnings,&informeserrores,&informeswarnings,&maxmem);
     
@@ -143,7 +143,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                                 else{
                                     huboerror=1;
                                     ++(*errores);
-                                    agregainforme(informeserrores,"En la linea ",DS," no existe el mnemonico : ",instruccion.mnemonico);
+                                    agregainforme(informeserrores,"En la linea ",DS+1," no existe el mnemonico : ",instruccion.mnemonico);
                                     instruccionHexa=0xFFFFFFFF;
                                 }
                                 pasoDeLectura=1;
@@ -187,75 +187,58 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
     fclose(instasm);
 }
 
-void generabin(int memoria[],char nombre[],FILE *instabin,int maxmem){
-    int DS;//este vendria desde el main
-    instabin=fopen(nombre,"wb");
-    if(instabin!=NULL) 
-        for(int i=0;i<maxmem;i++)
-            fwrite((memoria+i),sizeof(memoria[i]),1,instabin);
-}
+//proce y func para funcionar
 
-void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *instruccionhexa,int cantargumentos,tlista rotulos,int *errores,int *warnings,int DS,tlistastring *informeserrores,tlistastring *informeswarnings){
-    int i,linearotulo,esrotulo;
-    int codoperando[3];
-    long int args[3];
-    for(int i=0;i<cantargumentos;i++){
-        codoperando[i]=codigooperando(instruccion.argumentos[i]);
-        esrotulo=codoperando[i]==0 && toupper(instruccion.argumentos[i][0])>='A' && toupper(instruccion.argumentos[i][0])<='Z';
-        if(!esrotulo){
-            args[i]=buscaargumento(instruccion.argumentos[i]);
-            args[i]=buscaargumento(instruccion.argumentos[i]);//dejar las dos lineas repetidas, nose por que pero anda si esta dos veces al menos a mi
-            if(codoperando[i]==0 && (args[i]>(4095+((-cantargumentos+2)*61440))  ))//se trunca el operando
-            {
-                ++(*warnings);
-                agregainforme(informeswarnings,"En la linea ",DS," se trunco el operando ",instruccion.argumentos[i]);
-            } 
+void cargarotulos(tlista *rotulos, char archivo[]){
+    FILE *instasm;
+    char linea[DIMS];
+    char posiblerotulo[DIMS];
+    int numlinea=-1;
+    int i;
+    int indice;
+    *rotulos=NULL;
+    instasm=fopen(archivo,"r");
+    while(fgets(linea,256,instasm)!=NULL){
+        i=0;
+        indice=-1;
+        posiblerotulo[0]='\0';
+        while(i<strlen(linea) && linea[i]==' ')
+            ++i;
+        if(i<strlen(linea) && linea[i]!=';')
+            numlinea++;
+        while(i<strlen(linea) && linea[i]!=' ' && posiblerotulo[strlen(posiblerotulo)]!=':' ){
+            posiblerotulo[++indice]=linea[i];
+            posiblerotulo[indice+1]='\0';
+            ++i;
         }
-        else
-            linearotulo=buscarotulo(rotulos,instruccion.argumentos[0]);
+        if(posiblerotulo[indice]==':')
+            agregarotulo(rotulos,posiblerotulo,numlinea);
     }
-    if(cantargumentos==0)
-        *instruccionhexa=codigomnemo<<20 & 0xFFF00000;
-    else 
-        if(cantargumentos==1)
-            if (codigomnemo>240 && codigomnemo<248 && esrotulo){
-                if(linearotulo==0xFFF){
-                    agregainforme(informeserrores,"En la linea ",DS," no existe el rotulo : ",instruccion.argumentos[0]);
-                    ++(*errores);
-                }
-                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | 00<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | linearotulo & 0x00000FFF;
-            }
-            else if(codigomnemo==0xF0)
-                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | args[0] & 0x00000FFF;
-                else
-                    *instruccionhexa=codigomnemo<<24 & 0xFF000000 | codoperando[0]<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | args[0] & 0x00000FFF;
-        else
-            *instruccionhexa=codigomnemo<<28 & 0xF0000000 | codoperando[0]<<26 & 0x0C000000 | codoperando[1]<<24 & 0x03000000 | args[0]<<12 & 0x00FFF000 | args[1] & 0x00000FFF;
+    fclose(instasm);
 }
 
-void muestramemoria(int memoria[]){//de prueba
-    printf("\n\n\n");
-    for(int i=0;i<=100;i++){
-        printf("%x",memoria[i]);
-        if((i+1)%8==0)
-            printf("\n");
-    }
+int buscarotulo(tlista rotulos,char rotulo[]){
+    char aux[DIMS];
+    strcpy(aux,rotulo);
+    if(rotulo[strlen(rotulo)-1]!=':')
+        strcat(aux,":");
+    while(rotulos!=NULL && strcasecmp(aux,rotulos->rotulo)!=0)
+        rotulos=rotulos->sig;
+    if(rotulos!=NULL)
+        return rotulos->numerodelinea;
+    else
+        return 0xFFF;
 }
-void muestralista(tlistastring informe){
-    while (informe!=NULL){
-        printf("%s \n",informe->cadena);
-        informe=informe->sig;
-    }
-}
-void agregainforme(tlistastring *informe,char frase1[],int linea,char frase2[],char dato[]){
-    tlistastring nuevo;
-    char aux[MAX];
-    sprintf(aux,"%d",linea);
-    nuevo=(tlistastring)malloc(sizeof(nodostring));
-    strcpy(nuevo->cadena,frase1);strcat(nuevo->cadena,aux);
-    strcat(nuevo->cadena,frase2);strcat(nuevo->cadena,dato);
-    nuevo->sig=*informe;
-    *informe=nuevo;
+
+int buscamnemonico(char mnemonico[]){
+    nombre mnemonicos[25]={"MOV","ADD","SUB","SWAP","MUL","DIV","CMP","SHL","SHR","AND","OR","XOR","SYS","JMP","JZ","JP","JN","JNZ","JNP","JNN","LDL","LDH","RND","NOT","STOP"};
+    int i=0;
+    while(i<=24 && strcasecmp(mnemonico,mnemonicos[i])!=0)
+        ++i;
+    if(i<=24)
+        return i+(i>=12)*228+(i>23)*3829;
+    else
+        return 4095;
 }
 
 int buscaargumento(char argumento[]){
@@ -280,118 +263,13 @@ int buscaargumento(char argumento[]){
             return (int)argumento[1];//era 'A' o algo asi        
     }
 }
+
 int buscaregistro(char registro[]){
     int i=0;
     nombre registros[16]={"DS","\0","\0","\0","\0","IP","\0","\0","CC","AC","AX","BX","CX","DX","EX","FX"};
     while(strcasecmp(registro,registros[i])!=0)
         ++i;
     return i;
-}
-
-int codigooperando(char argumento[]){ 
-    char caracter,comilla[2]="'";
-    int i=0;
-    while(argumento[i]!='[' && comilla[0]!=argumento[i] && (argumento[i]<'0' || argumento[i]>'9') && (toupper(argumento[i])<'A' || toupper(argumento[i])>'Z'))
-        ++i;
-    caracter=toupper(argumento[i]);
-    if(caracter=='[')
-        return 2;
-    else
-        if(caracter>='A' && caracter<='Z' && strlen(argumento)==2)
-            return 1;
-        else
-            return 0;
-}
-
-int identificaBase(char dato){
-    char base[17]={'*','*','*','*','*','*','*','*','@','*','#','*','*','*','*','*','%'};
-    int i=0;
-    while(i<=strlen(base) && base[i]!=dato)
-        i++;
-    if(i<=16)
-        return i;
-    else if(dato=='-' || (dato>='0' && dato<='9'))
-        return 10;
-    else
-
-        return 99;//si no tenia ningun simbolo, y tampoco era directamente el numero en decimal, entonces era un caracter entre comillas
-}
-
-int basebtodecimal(char cadena[],int baseb){
-    int numero=0;
-    for(int i=1;i<strlen(cadena);i++)
-        numero+=((int)cadena[i]-48-7*((int)cadena[i]>=65))*potencia(baseb,strlen(cadena)-(i+1));
-    return numero;
-}
-int potencia(int n,int exponente){
-    int resultado=1;
-    for(int i=1;i<=exponente;i++)
-        resultado*=n;
-    return resultado;
-}
-
-int buscamnemonico(char mnemonico[]){
-    nombre mnemonicos[25]={"MOV","ADD","SUB","SWAP","MUL","DIV","CMP","SHL","SHR","AND","OR","XOR","SYS","JMP","JZ","JP","JN","JNZ","JNP","JNN","LDL","LDH","RND","NOT","STOP"};
-    int i=0;
-    while(i<=24 && strcasecmp(mnemonico,mnemonicos[i])!=0)
-        ++i;
-    if(i<=24)
-        return i+(i>=12)*228+(i>23)*3829;
-    else
-        return 4095;
-}
-void agregarotulo(tlista *rotulos,char rotulo[],int numlinea){
-    tlista aux;
-    aux=(tlista)malloc(sizeof(nodo));
-    aux->sig=*rotulos;
-    strcpy(aux->rotulo,rotulo);
-    aux->numerodelinea=numlinea;
-    *rotulos=aux;
-}
-
-void cargarotulos(tlista *rotulos, char archivo[]){
-    FILE *instasm;
-    char linea[DIMS];
-    char posiblerotulo[DIMS];
-    int numlinea=-1;
-    int i;
-    int indice;
-    *rotulos=NULL;
-    instasm=fopen("instrucciones.txt","r");//fopen(archivo,"r");
-    while(fgets(linea,256,instasm)!=NULL){
-        i=0;
-        indice=-1;
-        posiblerotulo[0]='\0';
-        while(i<strlen(linea) && linea[i]==' ')
-            ++i;
-        if(i<strlen(linea) && linea[i]!=';')
-            numlinea++;
-        while(i<strlen(linea) && linea[i]!=' ' && posiblerotulo[strlen(posiblerotulo)]!=':' ){
-            posiblerotulo[++indice]=linea[i];
-            posiblerotulo[indice+1]='\0';
-            ++i;
-        }
-        if(posiblerotulo[indice]==':')
-            agregarotulo(rotulos,posiblerotulo,numlinea);
-    }
-    fclose(instasm);
-}
-int buscarotulo(tlista rotulos,char rotulo[]){
-    char aux[DIMS];
-    strcpy(aux,rotulo);
-    if(rotulo[strlen(rotulo)-1]!=':')
-        strcat(aux,":");
-    while(rotulos!=NULL && strcasecmp(aux,rotulos->rotulo)!=0)
-        rotulos=rotulos->sig;
-    if(rotulos!=NULL)
-        return rotulos->numerodelinea;
-    else
-        return 0xFFF;
-}
-
-void mayus(char cadena[]){
-    for(int i=0; i<strlen(cadena); i++)
-        cadena[i]=toupper(cadena[i]);
 }
 
 void imprimeLineas(registroinstruccion instruccion, int DS, int cantidadArgumetos, int instruccionHexa,int sininstruccion,int huboerror){
@@ -420,3 +298,154 @@ if(!sininstruccion){
 else
     printf("%59s %s\n","",instruccion.comentario);
 }
+
+void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *instruccionhexa,int cantargumentos,tlista rotulos,int *errores,int *warnings,int DS,tlistastring *informeserrores,tlistastring *informeswarnings){
+    int i,linearotulo,esrotulo;
+    int codoperando[3];
+    long int args[3];
+    for(int i=0;i<cantargumentos;i++){
+        codoperando[i]=codigooperando(instruccion.argumentos[i]);
+        esrotulo=codoperando[i]==0 && toupper(instruccion.argumentos[i][0])>='A' && toupper(instruccion.argumentos[i][0])<='Z';
+        if(!esrotulo){
+            args[i]=buscaargumento(instruccion.argumentos[i]);
+            args[i]=buscaargumento(instruccion.argumentos[i]);//dejar las dos lineas repetidas, nose por que pero anda si esta dos veces al menos a mi
+            if(codoperando[i]==0 && (args[i]>(4095+((-cantargumentos+2)*61440))  ))//se trunca el operando
+            {
+                ++(*warnings);
+                agregainforme(informeswarnings,"En la linea ",DS+1," se trunco el operando ",instruccion.argumentos[i]);
+            } 
+        }
+        else
+            linearotulo=buscarotulo(rotulos,instruccion.argumentos[0]);
+    }
+    if(cantargumentos==0)
+        *instruccionhexa=codigomnemo<<20 & 0xFFF00000;
+    else 
+        if(cantargumentos==1)
+            if (codigomnemo>240 && codigomnemo<248 && esrotulo){
+                if(linearotulo==0xFFF){
+                    agregainforme(informeserrores,"En la linea ",DS+1," no existe el rotulo : ",instruccion.argumentos[0]);
+                    ++(*errores);
+                }
+                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | 00<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | linearotulo & 0x00000FFF;
+            }
+            else if(codigomnemo==0xF0)
+                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | args[0] & 0x00000FFF;
+                else
+                    *instruccionhexa=codigomnemo<<24 & 0xFF000000 | codoperando[0]<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | args[0] & 0x00000FFF;
+        else
+            *instruccionhexa=codigomnemo<<28 & 0xF0000000 | codoperando[0]<<26 & 0x0C000000 | codoperando[1]<<24 & 0x03000000 | args[0]<<12 & 0x00FFF000 | args[1] & 0x00000FFF;
+}
+
+void agregainforme(tlistastring *informe,char frase1[],int linea,char frase2[],char dato[]){
+    tlistastring nuevo;
+    char aux[MAX];
+    sprintf(aux,"%d",linea);
+    nuevo=(tlistastring)malloc(sizeof(nodostring));
+    strcpy(nuevo->cadena,frase1);strcat(nuevo->cadena,aux);
+    strcat(nuevo->cadena,frase2);strcat(nuevo->cadena,dato);
+    nuevo->sig=*informe;
+    *informe=nuevo;
+}
+
+void generabin(int memoria[],char nombre[],FILE *instabin,int maxmem){
+    int DS;//este vendria desde el main
+    instabin=fopen(nombre,"wb");
+    if(instabin!=NULL) 
+        for(int i=0;i<maxmem;i++)
+            fwrite((memoria+i),sizeof(memoria[i]),1,instabin);
+}
+
+//proce y func auxiliares
+
+int identificaBase(char dato){
+    char base[17]={'*','*','*','*','*','*','*','*','@','*','#','*','*','*','*','*','%'};
+    int i=0;
+    while(i<=strlen(base) && base[i]!=dato)
+        i++;
+    if(i<=16)
+        return i;
+    else if(dato=='-' || (dato>='0' && dato<='9'))
+        return 10;
+    else
+
+        return 99;//si no tenia ningun simbolo, y tampoco era directamente el numero en decimal, entonces era un caracter entre comillas
+}
+
+void agregarotulo(tlista *rotulos,char rotulo[],int numlinea){
+    tlista aux;
+    aux=(tlista)malloc(sizeof(nodo));
+    aux->sig=*rotulos;
+    strcpy(aux->rotulo,rotulo);
+    aux->numerodelinea=numlinea;
+    *rotulos=aux;
+}
+
+int codigooperando(char argumento[]){ 
+    char caracter,comilla[2]="'";
+    int i=0;
+    while(argumento[i]!='[' && comilla[0]!=argumento[i] && (argumento[i]<'0' || argumento[i]>'9') && (toupper(argumento[i])<'A' || toupper(argumento[i])>'Z'))
+        ++i;
+    caracter=toupper(argumento[i]);
+    if(caracter=='[')
+        return 2;
+    else
+        if(caracter>='A' && caracter<='Z' && strlen(argumento)==2)
+            return 1;
+        else
+            return 0;
+}
+
+int basebtodecimal(char cadena[],int baseb){
+    int numero=0;
+    for(int i=1;i<strlen(cadena);i++)
+        numero+=((int)cadena[i]-48-7*((int)cadena[i]>=65))*potencia(baseb,strlen(cadena)-(i+1));
+    return numero;
+}
+
+int potencia(int n,int exponente){
+    int resultado=1;
+    for(int i=1;i<=exponente;i++)
+        resultado*=n;
+    return resultado;
+}
+
+void mayus(char cadena[]){
+    for(int i=0; i<strlen(cadena); i++)
+        cadena[i]=toupper(cadena[i]);
+}
+
+void muestramemoria(int memoria[]){//de prueba
+    printf("\n\n\n");
+    for(int i=0;i<=100;i++){
+        printf("%x",memoria[i]);
+        if((i+1)%8==0)
+            printf("\n");
+    }
+}
+
+void muestralista(tlistastring informe){
+    while (informe!=NULL){
+        printf("%s \n",informe->cadena);
+        informe=informe->sig;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
