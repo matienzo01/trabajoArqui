@@ -1,3 +1,4 @@
+\\ASM  DATA=50 Stack=20 Extra=200
                                 mov [10], 0 ;inicializo variables
          mov                   [20],    1
 OTRO:   cmp [20], 100 ;compara

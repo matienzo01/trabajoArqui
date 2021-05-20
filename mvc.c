@@ -31,6 +31,7 @@ typedef nodo* tlista;
 void traductor(FILE*,int[],int,char[],int*,int*,tlistastring*,tlistastring*,int*);
 
 void cargarotulos(tlista*, char[]);
+void determinaSegmentos(char*, int*, int);
 int buscarotulo(tlista,char[]);
 int buscamnemonico(char[]);
 int buscaargumento(char[]);
@@ -117,18 +118,26 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
         i=0;
         huboerror=0;
         lineasininstruccion=0;
-        while(i<strlen(linea)){
+        if(linea[0]==92){ //no me reconocia el caracter \ entonces le tuve q poner el valor en ASCII
+            if(linea[1]==92)
+                determinaSegmentos(linea, memoria, DS);
+            else{
+                //habia una \ colgada ahi en el medio, no se como decirlo
+            }
+        }
+        /*while(i<strlen(linea)){
             while(i<strlen(linea) && (linea[i]==' ' || linea[i]==','))
                  i++;
             if(i<strlen(linea)){
                 j=-1;
                 while(linea[i]!=' ' && i<strlen(linea) && linea[i]!='\n' && linea[i]!=',' && linea[i]!=';')
                     cadena[++j]=linea[i++];
-                if((linea[i]==';' || linea[i]=='\n') && pasoDeLectura==0 && strlen(cadena)==0){//estaba buscando mnemonico y encontro comentario o linea en blanco   
-                    if(linea[i]==';')
+                if((linea[i]==';' || linea[i]=='\n' || linea[i]==92) && pasoDeLectura==0 && strlen(cadena)==0){//estaba buscando mnemonico y encontro comentario o linea en blanco   
+                    if(linea[i]==';'){
                         instruccion.comentario[0]=linea[i];
+                        pasoDeLectura=2;
+                    }
                     lineasininstruccion=1;
-                    pasoDeLectura=2;
                 }
                 switch (pasoDeLectura){
                     case 0:
@@ -181,7 +190,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
         if(bandera)
             imprimeLineas(instruccion,DS,cantArgumentos,instruccionHexa,lineasininstruccion,huboerror);
         memoria[DS]=instruccionHexa;
-        memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
+        memset(instruccion.rotulo,0,strlen(instruccion.rotulo));*/
     }
     *maxmem=DS;
     fclose(instasm);
@@ -215,6 +224,61 @@ void cargarotulos(tlista *rotulos, char archivo[]){
             agregarotulo(rotulos,posiblerotulo,numlinea);
     }
     fclose(instasm);
+}
+
+void determinaSegmentos(char* linea, int* memoria, int cs){
+    int i=2, largo=strlen(linea); //i sera de la lectura de la linea
+    int j=0, bandera=0; //j sera el indice de la cadina
+    int l; //l sera el nro de bloque
+    int reg, valor;
+    char cadena[15]={'\0'};
+
+    *(memoria+4)=cs;
+    while(i<largo && *(linea+i)==' '){
+        i++;
+    }
+    if(i==largo){
+        printf("habia dos lineas \\ colgadas en el medio de la nada"); //--------------------------------------------------------
+    }else{
+        while(i<largo){
+            while(i<largo && *(linea+i)==' '){
+                i++;
+            }
+            while(*(linea+i)!=' ' && *(linea+i)!='='){
+                cadena[j++]=*(linea+i);
+                i++;
+            }
+            if(bandera==1){
+                if(strcasecmp("data", cadena)==0)
+                    reg=0;
+                else if(strcasecmp("extra", cadena)==0)
+                    reg=1;
+                else if(strcasecmp("stack", cadena)==0)
+                    reg=2;
+                else
+                    printf("Registro desconocido"); //--------------------------------------------------- aca iria un error de segmento desconocido
+                i++;//en esta posicion iria el igual
+                j=0;
+                memset(cadena, 0, strlen(cadena));
+                while(*(linea+i)!=' ' && *(linea+i)!=0){
+                    cadena[j++]=*(linea+i);
+                    i++;
+                }
+                j=0;    
+                valor=atoi(cadena);
+                *(memoria+reg)=valor;
+            }else{
+                if(strcasecmp(cadena,"ASM")==0)
+                    bandera=1;
+                    else
+                        printf("lo primero que se encontro fue algo que no era ASM"); //------------------------------------------
+                memset(cadena, 0, strlen(cadena));
+                i++;
+                j=0;
+            }
+        }
+        
+    }
 }
 
 int buscarotulo(tlista rotulos,char rotulo[]){
@@ -266,7 +330,7 @@ int buscaargumento(char argumento[]){
 
 int buscaregistro(char registro[]){
     int i=0;
-    nombre registros[16]={"DS","\0","\0","\0","\0","IP","\0","\0","CC","AC","AX","BX","CX","DX","EX","FX"};
+    nombre registros[16]={"DS","SS","ES","CS","HP","IP","SP","BP","CC","AC","AX","BX","CX","DX","EX","FX"};
     while(strcasecmp(registro,registros[i])!=0)
         ++i;
     return i;
@@ -350,10 +414,14 @@ void agregainforme(tlistastring *informe,char frase1[],int linea,char frase2[],c
 
 void generabin(int memoria[],char nombre[],FILE *instabin,int maxmem){
     int DS;//este vendria desde el main
+    int header=1297494577;
     instabin=fopen(nombre,"wb");
-    if(instabin!=NULL) 
+    if(instabin!=NULL){
+        fwrite(&header, sizeof(int), 1, instabin); //agrega la cabezera de la maquina virtual
         for(int i=0;i<maxmem;i++)
             fwrite((memoria+i),sizeof(memoria[i]),1,instabin);
+    } 
+        
 }
 
 //proce y func auxiliares
@@ -430,22 +498,3 @@ void muestralista(tlistastring informe){
         informe=informe->sig;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
