@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
     FILE *instasm;
     FILE *instbin;
     tlistastring informeserrores=NULL,informeswarnings=NULL;
-    int memoria[4096],maxmem,parametro;
+    int memoria[4096]={0},maxmem,parametro;
     int errores=0,warnings=0;
     char aux[DIMS]={'\0'};
 
@@ -125,7 +125,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                 //habia una \ colgada ahi en el medio, no se como decirlo
             }
         }
-        /*while(i<strlen(linea)){
+        while(i<strlen(linea)){
             while(i<strlen(linea) && (linea[i]==' ' || linea[i]==','))
                  i++;
             if(i<strlen(linea)){
@@ -190,8 +190,10 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
         if(bandera)
             imprimeLineas(instruccion,DS,cantArgumentos,instruccionHexa,lineasininstruccion,huboerror);
         memoria[DS]=instruccionHexa;
-        memset(instruccion.rotulo,0,strlen(instruccion.rotulo));*/
+        memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
     }
+    if(*(memoria+1)==0)
+        determinaSegmentos("\\", memoria , DS);
     *maxmem=DS;
     fclose(instasm);
 }
@@ -233,7 +235,7 @@ void determinaSegmentos(char* linea, int* memoria, int cs){
     int reg, valor;
     char cadena[15]={'\0'};
 
-    *(memoria+4)=cs;
+    *(memoria+3)=cs;
     while(i<largo && *(linea+i)==' '){
         i++;
     }
@@ -241,43 +243,60 @@ void determinaSegmentos(char* linea, int* memoria, int cs){
         printf("habia dos lineas \\ colgadas en el medio de la nada"); //--------------------------------------------------------
     }else{
         while(i<largo){
-            while(i<largo && *(linea+i)==' '){
+            while(i<largo && (*(linea+i)==' ' || *(linea+i)=='\n')){
                 i++;
             }
-            while(*(linea+i)!=' ' && *(linea+i)!='='){
-                cadena[j++]=*(linea+i);
-                i++;
-            }
-            if(bandera==1){
-                if(strcasecmp("data", cadena)==0)
-                    reg=0;
-                else if(strcasecmp("extra", cadena)==0)
-                    reg=1;
-                else if(strcasecmp("stack", cadena)==0)
-                    reg=2;
-                else
-                    printf("Registro desconocido"); //--------------------------------------------------- aca iria un error de segmento desconocido
-                i++;//en esta posicion iria el igual
-                j=0;
-                memset(cadena, 0, strlen(cadena));
-                while(*(linea+i)!=' ' && *(linea+i)!=0){
+            if(i<largo){
+                while(*(linea+i)!=' ' && *(linea+i)!='=' ){
                     cadena[j++]=*(linea+i);
                     i++;
                 }
-                j=0;    
-                valor=atoi(cadena);
-                *(memoria+reg)=valor;
-            }else{
-                if(strcasecmp(cadena,"ASM")==0)
-                    bandera=1;
-                    else
-                        printf("lo primero que se encontro fue algo que no era ASM"); //------------------------------------------
-                memset(cadena, 0, strlen(cadena));
-                i++;
-                j=0;
+                if(bandera==1){
+                    if(strcasecmp("data", cadena)==0)
+                        reg=0;
+                    else if(strcasecmp("extra", cadena)==0)
+                        reg=1;
+                    else if(strcasecmp("stack", cadena)==0)
+                        reg=2;
+                    else{
+                        printf("Registro desconocido: no existe el segmento %s\n", cadena); //--------------------------------------------------- aca iria un error de segmento desconocido
+                        reg=-1;
+                    }
+                        
+                    i++;//en esta posicion iria el igual
+                    j=0;
+                    memset(cadena, 0, strlen(cadena));
+                    if(reg>=0){
+                        while(*(linea+i)!=' ' && *(linea+i)!=0){
+                            cadena[j++]=*(linea+i);
+                            i++;
+                        }
+                        j=0;    
+                        valor=atoi(cadena);
+                        *(memoria+reg)=valor;
+                    }else
+                        i=largo+1; //si no existe el registo se frena la leida de la linea
+                    
+                }else{
+                    if(strcasecmp(cadena,"ASM")==0)
+                        bandera=1;
+                        else{
+                            printf("lo primero que se encontro fue algo que no era ASM\n"); //------------------------------------------
+                            i=largo+1;
+                        }
+                            
+                    memset(cadena, 0, strlen(cadena));
+                    i++;
+                    j=0;
+                }
             }
+            
+        }   
+    }
+    for(int z=0; z<=3; z++){
+        if(*(memoria+z)==0){
+            *(memoria+z)=1024; //si no se le asigno un valor, va el por defecto
         }
-        
     }
 }
 
