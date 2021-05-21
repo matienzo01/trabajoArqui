@@ -15,13 +15,24 @@ int identificaBase(char dato){
         return 99;//si no tenia ningun simbolo, y tampoco era directamente el numero en decimal, entonces era un caracter entre comillas
 }
 
-void agregarotulo(tlista *rotulos,char rotulo[],int numlinea){
-    tlista aux;
-    aux=(tlista)malloc(sizeof(nodo));
+void agregarotulo(tlistaR *rotulos,char rotulo[],int numlinea){
+    tlistaR aux;
+    aux=(tlistaR)malloc(sizeof(nodoR));
     aux->sig=*rotulos;
     strcpy(aux->rotulo,rotulo);
     aux->numerodelinea=numlinea;
     *rotulos=aux;
+}
+
+void agregaConstante(tlistaE* constantes, int valor[], int numlinea){
+    tlistaE aux;
+    aux= (tlistaE) malloc(sizeof(nodoEQU));
+    aux->sig=*constantes;
+    for(int i=0; i<10; i++){
+        aux->valor[i]=*(valor+i);
+    }
+    aux->linea=numlinea;
+    *constantes=aux;
 }
 
 int codigooperando(char argumento[]){ 

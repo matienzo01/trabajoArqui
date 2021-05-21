@@ -3,14 +3,14 @@
 //proce y func para funcionar
 void traductor(FILE*,int[],int,char[],int*,int*,tlistastring*,tlistastring*,int*);
 
-void cargarotulos(tlista*, char[]);
+void preproceso(tlistaR*, tlistaE*, char[], int*);
 void determinaSegmentos(char*, int*, int);
-int buscarotulo(tlista,char[]);
+int buscarotulo(tlistaR,char[]);
 int buscamnemonico(char[]);
 int buscaargumento(char[]);
 int buscaregistro(char[]);
 void imprimeLineas(registroinstruccion,int,int,int,int,int);
-void generainstruccion(int,registroinstruccion,int*,int,tlista,int*,int*,int,tlistastring*,tlistastring*);
+void generainstruccion(int,registroinstruccion,int*,int,tlistaR,int*,int*,int,tlistastring*,tlistastring*);
 void agregainforme(tlistastring*,char[],int,char[],char[]);
 void generabin(int[], char[], FILE*,int);
 
@@ -58,7 +58,7 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
 void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* errores,int *warnings,tlistastring *informeserrores,tlistastring *informeswarnings,int *maxmem){
     
     char linea[DIMS],cadena[DIMS]={'\0'};
-    int DS=-1;
+    int CS=-1;
     int cantArgumentos;
     int pasoDeLectura=0; 
     int i, j=-1; //i es indice de lectura y j de la cadena aux
@@ -67,11 +67,12 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
     int huboerror;
     int lineasininstruccion;
     registroinstruccion instruccion;
-    tlista rotulos;
+    tlistaR rotulos;
+    tlistaE constantes;
 
     int argumentosCargados,codmnemo;
 
-    cargarotulos(&rotulos, archivo);    
+    preproceso(&rotulos, &constantes, archivo, &CS);    
     memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
 
     while(fgets(linea,DIMS,instasm)!=NULL){
@@ -82,7 +83,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
         lineasininstruccion=0;
         if(linea[0]==92){ //no me reconocia el caracter \ entonces le tuve q poner el valor en ASCII
             if(linea[1]==92){
-                 determinaSegmentos(linea, memoria, DS);
+                 determinaSegmentos(linea, memoria, CS);
                  i=strlen(linea);
             }
             else{
@@ -106,7 +107,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                 switch (pasoDeLectura){
                     case 0:
                             if(buscarotulo(rotulos,cadena)==0xFFF){
-                                ++DS;
+                                ++CS;
                                 strcpy(instruccion.mnemonico,cadena);
                                 codmnemo=buscamnemonico(cadena);
                                 if(codmnemo!=0xFFF){
@@ -116,7 +117,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                                 else{
                                     huboerror=1;
                                     ++(*errores);
-                                    agregainforme(informeserrores,"En la linea ",DS+1," no existe el mnemonico : ",instruccion.mnemonico);
+                                    agregainforme(informeserrores,"En la linea ",CS+1," no existe el mnemonico : ",instruccion.mnemonico);
                                     instruccionHexa=0xFFFFFFFF;
                                 }
                                 pasoDeLectura=1;
@@ -150,44 +151,46 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
             ++i;
         }  
         if(!huboerror && !lineasininstruccion)
-            generainstruccion(codmnemo,instruccion,&instruccionHexa,cantArgumentos,rotulos,errores,warnings,DS,informeserrores,informeswarnings);
+            generainstruccion(codmnemo,instruccion,&instruccionHexa,cantArgumentos,rotulos,errores,warnings,CS,informeserrores,informeswarnings);
         if(bandera)
-            imprimeLineas(instruccion,DS,cantArgumentos,instruccionHexa,lineasininstruccion,huboerror);
-        memoria[DS]=instruccionHexa;
+            imprimeLineas(instruccion,CS,cantArgumentos,instruccionHexa,lineasininstruccion,huboerror);
+        memoria[CS]=instruccionHexa;
         memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
     }
     if(*(memoria+1)==0)
-        determinaSegmentos("\\", memoria , DS);
-    *maxmem=DS;
+        determinaSegmentos("\\", memoria , CS);
+    *maxmem=CS;
     fclose(instasm);
 }
 
 //proce y func para funcionar
 
-void cargarotulos(tlista *rotulos, char archivo[]){
+void preproceso(tlistaR *rotulos, tlistaE *constantes ,char archivo[], int* CS){
     FILE *instasm;
     char linea[DIMS];
-    char posiblerotulo[DIMS];
+    char cadena[DIMS]=0;
     int numlinea=-1;
     int i;
     int indice;
-    *rotulos=NULL;
+    *rotulos=NULL; *constantes=NULL;
+
+
     instasm=fopen(archivo,"r");
     while(fgets(linea,256,instasm)!=NULL){
         i=0;
         indice=-1;
-        posiblerotulo[0]='\0';
+        memset(cadena, 0, strlen(cadena));
         while(i<strlen(linea) && linea[i]==' ')
             ++i;
         if(i<strlen(linea) && linea[i]!=';')
             numlinea++;
-        while(i<strlen(linea) && linea[i]!=' ' && posiblerotulo[strlen(posiblerotulo)]!=':' ){
-            posiblerotulo[++indice]=linea[i];
-            posiblerotulo[indice+1]='\0';
+        while(i<strlen(linea) && linea[i]!=' ' && cadena[strlen(cadena)]!=':' ){
+            cadena[++indice]=linea[i];
+            cadena[indice+1]='\0';
             ++i;
         }
-        if(posiblerotulo[indice]==':')
-            agregarotulo(rotulos,posiblerotulo,numlinea);
+        if(cadena[indice]==':')
+            agregarotulo(rotulos,cadena,numlinea);
     }
     fclose(instasm);
 }
@@ -264,7 +267,7 @@ void determinaSegmentos(char* linea, int* memoria, int cs){
     }
 }
 
-int buscarotulo(tlista rotulos,char rotulo[]){
+int buscarotulo(tlistaR rotulos,char rotulo[]){
     char aux[DIMS];
     strcpy(aux,rotulo);
     if(rotulo[strlen(rotulo)-1]!=':')
@@ -319,13 +322,13 @@ int buscaregistro(char registro[]){
     return i;
 }
 
-void imprimeLineas(registroinstruccion instruccion, int DS, int cantidadArgumetos, int instruccionHexa,int sininstruccion,int huboerror){
+void imprimeLineas(registroinstruccion instruccion, int CS, int cantidadArgumetos, int instruccionHexa,int sininstruccion,int huboerror){
 if(!sininstruccion){
-    printf("[%04d]: %02x %02x %02x %02x",DS,instruccionHexa>>24 & 0x000000FF,instruccionHexa>>16 & 0x000000FF,instruccionHexa>>8 & 0x000000FF,instruccionHexa & 0x000000FF);
+    printf("[%04d]: %02x %02x %02x %02x",CS,instruccionHexa>>24 & 0x000000FF,instruccionHexa>>16 & 0x000000FF,instruccionHexa>>8 & 0x000000FF,instruccionHexa & 0x000000FF);
     if(strlen(instruccion.rotulo)!=0)
         printf(" %11s ",instruccion.rotulo);
     else
-        printf(" %10d: ",DS+1);
+        printf(" %10d: ",CS+1);
     if(!huboerror){
         switch (cantidadArgumetos){
             case 2:
@@ -346,7 +349,7 @@ else
     printf("%59s %s\n","",instruccion.comentario);
 }
 
-void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *instruccionhexa,int cantargumentos,tlista rotulos,int *errores,int *warnings,int DS,tlistastring *informeserrores,tlistastring *informeswarnings){
+void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *instruccionhexa,int cantargumentos,tlistaR rotulos,int *errores,int *warnings,int CS,tlistastring *informeserrores,tlistastring *informeswarnings){
     int i,linearotulo,esrotulo;
     int codoperando[3];
     long int args[3];
@@ -359,7 +362,7 @@ void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *inst
             if(codoperando[i]==0 && (args[i]>(4095+((-cantargumentos+2)*61440))  ))//se trunca el operando
             {
                 ++(*warnings);
-                agregainforme(informeswarnings,"En la linea ",DS+1," se trunco el operando ",instruccion.argumentos[i]);
+                agregainforme(informeswarnings,"En la linea ",CS+1," se trunco el operando ",instruccion.argumentos[i]);
             } 
         }
         else
@@ -371,7 +374,7 @@ void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *inst
         if(cantargumentos==1)
             if (codigomnemo>240 && codigomnemo<248 && esrotulo){
                 if(linearotulo==0xFFF){
-                    agregainforme(informeserrores,"En la linea ",DS+1," no existe el rotulo : ",instruccion.argumentos[0]);
+                    agregainforme(informeserrores,"En la linea ",CS+1," no existe el rotulo : ",instruccion.argumentos[0]);
                     ++(*errores);
                 }
                 *instruccionhexa=codigomnemo<<24 & 0xFF000000 | 00<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | linearotulo & 0x00000FFF;
@@ -396,7 +399,7 @@ void agregainforme(tlistastring *informe,char frase1[],int linea,char frase2[],c
 }
 
 void generabin(int memoria[],char nombre[],FILE *instabin,int maxmem){
-    int DS;//este vendria desde el main
+    int CS;//este vendria desde el main
     int header=1297494577;
     instabin=fopen(nombre,"wb");
     if(instabin!=NULL){

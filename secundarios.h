@@ -20,16 +20,25 @@ typedef struct{
     char comentario[DIMS];
 }registroinstruccion;
 
-typedef struct nodo{
+typedef struct nodoR{
     char rotulo[DIMS];
     int numerodelinea;
-    struct nodo *sig;
-}nodo;
-typedef nodo* tlista;
+    struct nodoR *sig;
+}nodoR;
+typedef nodoR* tlistaR;
+
+typedef struct nodoEQU{
+    int linea;
+    int valor[10];
+    struct nodoEQU* sig;
+}nodoEQU;
+
+typedef nodoEQU* tlistaE;
 
 //proce y func auxiliares
 int identificaBase(char);
-void agregarotulo(tlista*,char[],int);
+void agregarotulo(tlistaR*,char[],int);
+void agregaConstante(tlistaE*, int[], int);
 int codigooperando(char[]);
 int basebtodecimal(char[],int);
 int potencia(int,int);
