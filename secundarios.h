@@ -28,8 +28,11 @@ typedef struct nodoR{
 typedef nodoR* tlistaR;
 
 typedef struct nodoEQU{
-    int linea;
+    char nombre[10];
+    int bloque; //bloque de memoria que ocupara
     int valor[10];
+    int tipo;
+    int tamanio;
     struct nodoEQU* sig;
 }nodoEQU;
 
@@ -38,10 +41,11 @@ typedef nodoEQU* tlistaE;
 //proce y func auxiliares
 int identificaBase(char);
 void agregarotulo(tlistaR*,char[],int);
-void agregaConstante(tlistaE*, int[], int);
+void agregaConstante(tlistaE*, char[], char[]);
 int codigooperando(char[]);
 int basebtodecimal(char[],int);
 int potencia(int,int);
 void mayus(char[]);
 void muestramemoria(int[]);//despues borrar
 void muestralista(tlistastring);
+void eliminaCaracter(char *s, char c);

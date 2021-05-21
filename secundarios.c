@@ -24,15 +24,44 @@ void agregarotulo(tlistaR *rotulos,char rotulo[],int numlinea){
     *rotulos=aux;
 }
 
-void agregaConstante(tlistaE* constantes, int valor[], int numlinea){
+void agregaConstante(tlistaE* constantes, char nombre[] ,char valor[]){
     tlistaE aux;
+    tlistaE recorre;
+    char cadena[10];
+    int j=1;
+    int k=0;
+
+    int bandera=1; //1 significa numero
+
     aux= (tlistaE) malloc(sizeof(nodoEQU));
-    aux->sig=*constantes;
-    for(int i=0; i<10; i++){
-        aux->valor[i]=*(valor+i);
+    aux->sig=NULL;
+    strcpy(aux->nombre, nombre);
+    if(*(valor)==39 || *(valor)==34){ //39 es ' y 34 "
+        bandera=0;
+        if(*valor==39)
+            eliminaCaracter(valor, 39);
+        else
+            eliminaCaracter(valor, 34);
     }
-    aux->linea=numlinea;
-    *constantes=aux;
+    aux->tipo=bandera;
+    if(bandera){
+        aux->valor[0]=atoi(valor);
+    }else{
+        strcpy((char *)aux->valor, valor);
+    }
+    aux->tamanio=strlen(valor);
+    if(*constantes==NULL){
+        aux->bloque=0;
+        *constantes=aux;
+    }else{
+        recorre=*constantes;
+        while(recorre->sig!=NULL)
+            recorre=recorre->sig;
+        recorre->sig=aux;
+        aux->bloque=recorre->bloque+recorre->tamanio;
+    }
+        
+    
 }
 
 int codigooperando(char argumento[]){ 
@@ -83,4 +112,21 @@ void muestralista(tlistastring informe){
         printf("%s \n",informe->cadena);
         informe=informe->sig;
     }
+}
+
+void eliminaCaracter(char *s, char c)
+{
+    int writer = 0, reader = 0;
+
+    while (s[reader])
+    {
+        if (s[reader]!=c) 
+        {   
+            s[writer++] = s[reader];
+        }
+
+        reader++;       
+    }
+
+    s[writer]=0;
 }

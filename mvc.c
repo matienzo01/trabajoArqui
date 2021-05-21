@@ -39,7 +39,7 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
         parametro= (strcmp(argv[3],"-o")==0)? 0:1; //chequea si tiene el -o
 
     traductor(instasm,memoria,parametro,argv[1],&errores,&warnings,&informeserrores,&informeswarnings,&maxmem);
-    
+
     printf("Errores = %d \n",errores);
     muestralista(informeserrores);
     if(errores==0){
@@ -107,7 +107,6 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                 switch (pasoDeLectura){
                     case 0:
                             if(buscarotulo(rotulos,cadena)==0xFFF){
-                                ++CS;
                                 strcpy(instruccion.mnemonico,cadena);
                                 codmnemo=buscamnemonico(cadena);
                                 if(codmnemo!=0xFFF){
@@ -168,29 +167,81 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
 void preproceso(tlistaR *rotulos, tlistaE *constantes ,char archivo[], int* CS){
     FILE *instasm;
     char linea[DIMS];
-    char cadena[DIMS]=0;
-    int numlinea=-1;
+    char cadena[DIMS]={0};
+    char aux[10]={0}; //esta cadena solo se usa para verificar el EQU y despues reutilizada para el valor
     int i;
+    int j=0;
     int indice;
+    int largo=sizeof(linea);
     *rotulos=NULL; *constantes=NULL;
+    tlistaE recorre;
 
-
+    *CS=-1;
     instasm=fopen(archivo,"r");
     while(fgets(linea,256,instasm)!=NULL){
         i=0;
-        indice=-1;
+        indice=0;
         memset(cadena, 0, strlen(cadena));
-        while(i<strlen(linea) && linea[i]==' ')
+        if(linea[0]==92 && linea[1]==92) //si es la linea del asm lo salto de una
+            i=largo+1;
+        while(i<largo && linea[i]==' ')
             ++i;
-        if(i<strlen(linea) && linea[i]!=';')
-            numlinea++;
-        while(i<strlen(linea) && linea[i]!=' ' && cadena[strlen(cadena)]!=':' ){
-            cadena[++indice]=linea[i];
-            cadena[indice+1]='\0';
-            ++i;
-        }
-        if(cadena[indice]==':')
-            agregarotulo(rotulos,cadena,numlinea);
+        if(i<largo && linea[i]!=';'){//si no es una linea vacia o un comentario
+            while(i<largo && linea[i]!=' '){
+                cadena[indice++]=linea[i++];
+            }
+            if(buscamnemonico(cadena)!=0xFFF){ //si es un mnemonico
+                (*CS)++;
+                i=largo+1;
+            }else if(cadena[indice-1]==':'){ //si es un rotulo
+                (*CS)++;
+                agregarotulo(rotulos,cadena,(*CS));
+                i=largo+1;
+            }else{
+                i++;
+                while(i<largo && linea[i]==' ')
+                    ++i;
+                if(i<largo){
+                    j=0;
+                    while(i<largo && linea[i]!=' '){
+                        aux[j++]=linea[i++];
+                    }
+                    if(strcasecmp(aux, "equ")==0){
+                        memset(aux, 0, strlen(aux));
+                        while(i<largo && linea[i]==' ')
+                            ++i;
+                        j=0;
+                        while(i<largo && linea[i]!=' ' && linea[i]!='\n'){
+                            aux[j++]=linea[i++];
+                        }
+                        agregaConstante(constantes, cadena, aux);
+                        memset(aux, 0, strlen(aux));
+                    }else{
+                        printf("Simbolo desconocido\n");//-----------------------------------------------------------simbolo desconocido
+                    }
+                }else{
+                    printf("Simbolo desconocido\n");//----------------------------------------------------------------simbolo desconocido
+                }
+            }
+                
+
+        }else{
+            i=largo+1;
+        }            
+    }
+    recorre=*constantes;
+    while(recorre!=NULL){
+        recorre->bloque+=(*CS);
+        recorre=recorre->sig;
+    }
+    recorre=*constantes;
+    while(recorre!=NULL){
+        if(recorre->tipo)
+            printf("La constante %s tiene el valor de %d y ocupa un solo espacio", recorre->nombre, recorre->valor[0]);
+            else
+                printf("La constante %s es %s y ocupa %d espacios", recorre->nombre, recorre->valor, recorre->tamanio);
+        printf("y iniciaria en el bloque %d del DS\n", recorre->bloque);
+        recorre=recorre->sig;
     }
     fclose(instasm);
 }
@@ -281,12 +332,12 @@ int buscarotulo(tlistaR rotulos,char rotulo[]){
 }
 
 int buscamnemonico(char mnemonico[]){
-    nombre mnemonicos[25]={"MOV","ADD","SUB","SWAP","MUL","DIV","CMP","SHL","SHR","AND","OR","XOR","SYS","JMP","JZ","JP","JN","JNZ","JNP","JNN","LDL","LDH","RND","NOT","STOP"};
+    nombre mnemonicos[32]={"MOV","ADD","SUB","SWAP","MUL","DIV","CMP","SHL","SHR","AND","OR","XOR","SLEN", "SMOV", "SCMP", "SYS","JMP","JZ","JP","JN","JNZ","JNP","JNN","LDL","LDH","RND","NOT","PUSH","POP", "CALL","RET", "STOP"};
     int i=0;
-    while(i<=24 && strcasecmp(mnemonico,mnemonicos[i])!=0)
+    while(i<=32 && strcasecmp(mnemonico,mnemonicos[i])!=0)
         ++i;
-    if(i<=24)
-        return i+(i>=12)*228+(i>23)*3829;
+    if(i<=32)
+        return i+(i>=14)*225+(i>=30)*3825;
     else
         return 4095;
 }
