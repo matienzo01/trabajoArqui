@@ -1,31 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#define DIMS 80
-#define MAX 10
-
-typedef struct nodostring{
-    char cadena[DIMS];
-    struct nodostring *sig;
-}nodostring;
-typedef nodostring *tlistastring;
-
-typedef char nombre[MAX];
-
-typedef struct{
-    char rotulo[DIMS];
-    char mnemonico[MAX];
-    nombre argumentos[4];
-    char comentario[DIMS];
-}registroinstruccion;
-
-typedef struct nodo{
-    char rotulo[DIMS];
-    int numerodelinea;
-    struct nodo *sig;
-}nodo;
-typedef nodo* tlista;
+#include "secundarios.h"
 
 //proce y func para funcionar
 void traductor(FILE*,int[],int,char[],int*,int*,tlistastring*,tlistastring*,int*);
@@ -40,17 +13,6 @@ void imprimeLineas(registroinstruccion,int,int,int,int,int);
 void generainstruccion(int,registroinstruccion,int*,int,tlista,int*,int*,int,tlistastring*,tlistastring*);
 void agregainforme(tlistastring*,char[],int,char[],char[]);
 void generabin(int[], char[], FILE*,int);
-
-
-//proce y func auxiliares
-int identificaBase(char);
-void agregarotulo(tlista*,char[],int);
-int codigooperando(char[]);
-int basebtodecimal(char[],int);
-int potencia(int,int);
-void mayus(char[]);
-void muestramemoria(int[]);//despues borrar
-void muestralista(tlistastring);
 
 int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q imprimir
     FILE *instasm;
@@ -119,8 +81,10 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
         huboerror=0;
         lineasininstruccion=0;
         if(linea[0]==92){ //no me reconocia el caracter \ entonces le tuve q poner el valor en ASCII
-            if(linea[1]==92)
-                determinaSegmentos(linea, memoria, DS);
+            if(linea[1]==92){
+                 determinaSegmentos(linea, memoria, DS);
+                 i=strlen(linea);
+            }
             else{
                 //habia una \ colgada ahi en el medio, no se como decirlo
             }
@@ -441,79 +405,4 @@ void generabin(int memoria[],char nombre[],FILE *instabin,int maxmem){
             fwrite((memoria+i),sizeof(memoria[i]),1,instabin);
     } 
         
-}
-
-//proce y func auxiliares
-
-int identificaBase(char dato){
-    char base[17]={'*','*','*','*','*','*','*','*','@','*','#','*','*','*','*','*','%'};
-    int i=0;
-    while(i<=strlen(base) && base[i]!=dato)
-        i++;
-    if(i<=16)
-        return i;
-    else if(dato=='-' || (dato>='0' && dato<='9'))
-        return 10;
-    else
-
-        return 99;//si no tenia ningun simbolo, y tampoco era directamente el numero en decimal, entonces era un caracter entre comillas
-}
-
-void agregarotulo(tlista *rotulos,char rotulo[],int numlinea){
-    tlista aux;
-    aux=(tlista)malloc(sizeof(nodo));
-    aux->sig=*rotulos;
-    strcpy(aux->rotulo,rotulo);
-    aux->numerodelinea=numlinea;
-    *rotulos=aux;
-}
-
-int codigooperando(char argumento[]){ 
-    char caracter,comilla[2]="'";
-    int i=0;
-    while(argumento[i]!='[' && comilla[0]!=argumento[i] && (argumento[i]<'0' || argumento[i]>'9') && (toupper(argumento[i])<'A' || toupper(argumento[i])>'Z'))
-        ++i;
-    caracter=toupper(argumento[i]);
-    if(caracter=='[')
-        return 2;
-    else
-        if(caracter>='A' && caracter<='Z' && strlen(argumento)==2)
-            return 1;
-        else
-            return 0;
-}
-
-int basebtodecimal(char cadena[],int baseb){
-    int numero=0;
-    for(int i=1;i<strlen(cadena);i++)
-        numero+=((int)cadena[i]-48-7*((int)cadena[i]>=65))*potencia(baseb,strlen(cadena)-(i+1));
-    return numero;
-}
-
-int potencia(int n,int exponente){
-    int resultado=1;
-    for(int i=1;i<=exponente;i++)
-        resultado*=n;
-    return resultado;
-}
-
-void mayus(char cadena[]){
-    for(int i=0; i<strlen(cadena); i++)
-        cadena[i]=toupper(cadena[i]);
-}
-
-void muestramemoria(int memoria[]){//de prueba
-    printf("\n\n\n");
-    for(int i=0;i<=100;i++){
-        printf("%x",memoria[i]);
-        if((i+1)%8==0)
-            printf("\n");
-    }
-}
-
-void muestralista(tlistastring informe){
-    while (informe!=NULL){
-        printf("%s \n",informe->cadena);
-        informe=informe->sig;
-    }
 }

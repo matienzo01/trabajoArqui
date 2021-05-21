@@ -6,7 +6,7 @@
             "command": "C:\\mingw64\\bin\\gcc.exe",
             "args": [
                 "-g",
-                "${file}",
+                "${fileDirname}\\**.c",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"
             ],
