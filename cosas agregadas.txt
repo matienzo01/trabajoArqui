@@ -20,3 +20,7 @@
 
  *1 La muestra por pantalla se puede sacar, es simplemente para ver si todo estaba saliendo correctamente. El carga constante en una parte tiene un cast medio extraño pero funciona, despues lo probamos mejor
  *2 La lista inserta al final, asi al momento de cargarlos a la memoria (TODAVIA NO IMPLEMENTADO) se mas facil, para poder cargar a medida q se recorre
+
+ 22/05/2021
+  - Separacion de las constantes en 2 listas: una de strings y otra de caracteres y numeros. Los caracteres se almacena su correspondiente ASCII
+  - El metodo agregaConstante ahora agrega cada cte a su correspondiente lista

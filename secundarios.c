@@ -24,44 +24,52 @@ void agregarotulo(tlistaR *rotulos,char rotulo[],int numlinea){
     *rotulos=aux;
 }
 
-void agregaConstante(tlistaE* constantes, char nombre[] ,char valor[]){
-    tlistaE aux;
-    tlistaE recorre;
-    char cadena[10];
-    int j=1;
-    int k=0;
+void agregaConstante(tlistaES* constantesS, tlistaEC* ctesC,char nombre[] ,char valor[]){
+    tlistaES auxS;
+    tlistaES recorreS;
+    tlistaEC auxC;
 
-    int bandera=1; //1 significa numero
+    int bandera; //0 significa numero, 1 significa caracter, 2 significa string
 
-    aux= (tlistaE) malloc(sizeof(nodoEQU));
-    aux->sig=NULL;
-    strcpy(aux->nombre, nombre);
-    if(*(valor)==39 || *(valor)==34){ //39 es ' y 34 "
-        bandera=0;
-        if(*valor==39)
+    if(*(valor)==39 || *(valor)==34) //39 es ' y 34 "
+        if(*valor==39){
             eliminaCaracter(valor, 39);
-        else
+            bandera=1;
+        }else{
             eliminaCaracter(valor, 34);
-    }
-    aux->tipo=bandera;
-    if(bandera){
-        aux->valor[0]=atoi(valor);
-    }else{
-        strcpy((char *)aux->valor, valor);
-    }
-    aux->tamanio=strlen(valor);
-    if(*constantes==NULL){
-        aux->bloque=0;
-        *constantes=aux;
-    }else{
-        recorre=*constantes;
-        while(recorre->sig!=NULL)
-            recorre=recorre->sig;
-        recorre->sig=aux;
-        aux->bloque=recorre->bloque+recorre->tamanio;
-    }
-        
+            bandera=2;
+        }
+    else
+        bandera=0;
     
+    if(bandera==0 || bandera==1){
+        auxC= (tlistaEC) malloc(sizeof(NODOEQUC));
+        strcpy(auxC->nombre, nombre);
+        if(bandera)
+            auxC->valor= (int) (*valor);
+        else
+            auxC->valor= atoi(valor);
+        auxC->sig=*ctesC;
+        *ctesC=auxC;
+    }else{
+        auxS= (tlistaES) malloc(sizeof(nodoEQUS));
+        
+        strcpy(auxS->nombre, nombre);
+        auxS->tipo=bandera;
+        auxS->tamanio=strlen(valor);
+        strcpy(auxS->valor, valor);
+        if(*constantesS==NULL){
+            auxS->bloque=0;
+            auxS->sig=NULL;
+            *constantesS=auxS;
+        }else{
+            recorreS=*constantesS;
+            while(recorreS->sig!=NULL)
+                recorreS=recorreS->sig;
+            recorreS->sig=auxS;
+            auxS->bloque=recorreS->bloque+recorreS->tamanio;
+        }
+    }
 }
 
 int codigooperando(char argumento[]){ 
@@ -129,4 +137,15 @@ void eliminaCaracter(char *s, char c)
     }
 
     s[writer]=0;
+}
+
+int buscaConstante(tlistaES constantes, char nombre[]){
+    int respuesta=-1;
+    while(constantes!=NULL && respuesta==-1){
+        if(strcasecmp(constantes->nombre, nombre)==0){
+            respuesta=constantes->bloque;
+        }
+        constantes=constantes->sig;
+    }
+    return respuesta;
 }

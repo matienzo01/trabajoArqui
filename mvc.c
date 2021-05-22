@@ -3,7 +3,7 @@
 //proce y func para funcionar
 void traductor(FILE*,int[],int,char[],int*,int*,tlistastring*,tlistastring*,int*);
 
-void preproceso(tlistaR*, tlistaE*, char[], int*);
+void preproceso(tlistaR*, tlistaES*, tlistaEC*,char[], int*);
 void determinaSegmentos(char*, int*, int);
 int buscarotulo(tlistaR,char[]);
 int buscamnemonico(char[]);
@@ -68,11 +68,12 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
     int lineasininstruccion;
     registroinstruccion instruccion;
     tlistaR rotulos;
-    tlistaE constantes;
+    tlistaES ctesString;
+    tlistaEC ctesCarac;
 
     int argumentosCargados,codmnemo;
 
-    preproceso(&rotulos, &constantes, archivo, &CS);    
+    preproceso(&rotulos, &ctesString, &ctesCarac, archivo, &CS);    
     memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
 
     while(fgets(linea,DIMS,instasm)!=NULL){
@@ -85,6 +86,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
             if(linea[1]==92){
                  determinaSegmentos(linea, memoria, CS);
                  i=strlen(linea);
+                 lineasininstruccion=1;
             }
             else{
                 //habia una \ colgada ahi en el medio, no se como decirlo
@@ -97,6 +99,12 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                 j=-1;
                 while(linea[i]!=' ' && i<strlen(linea) && linea[i]!='\n' && linea[i]!=',' && linea[i]!=';')
                     cadena[++j]=linea[i++];
+                if(buscaConstante(ctesString, cadena)!=-1){
+                    lineasininstruccion=1;
+                    pasoDeLectura=3;
+                    i=strlen(linea)+1;
+                    memset(cadena, 0, strlen(cadena));
+                }
                 if((linea[i]==';' || linea[i]=='\n' || linea[i]==92) && pasoDeLectura==0 && strlen(cadena)==0){//estaba buscando mnemonico y encontro comentario o linea en blanco   
                     if(linea[i]==';'){
                         instruccion.comentario[0]=linea[i];
@@ -164,7 +172,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
 
 //proce y func para funcionar
 
-void preproceso(tlistaR *rotulos, tlistaE *constantes ,char archivo[], int* CS){
+void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char archivo[], int* CS){
     FILE *instasm;
     char linea[DIMS];
     char cadena[DIMS]={0};
@@ -173,8 +181,10 @@ void preproceso(tlistaR *rotulos, tlistaE *constantes ,char archivo[], int* CS){
     int j=0;
     int indice;
     int largo=sizeof(linea);
-    *rotulos=NULL; *constantes=NULL;
-    tlistaE recorre;
+    *rotulos=NULL; *constantesS=NULL; *cteC=NULL;
+
+    tlistaES recorreS;
+    tlistaEC recorreC;
 
     *CS=-1;
     instasm=fopen(archivo,"r");
@@ -214,7 +224,7 @@ void preproceso(tlistaR *rotulos, tlistaE *constantes ,char archivo[], int* CS){
                         while(i<largo && linea[i]!=' ' && linea[i]!='\n'){
                             aux[j++]=linea[i++];
                         }
-                        agregaConstante(constantes, cadena, aux);
+                        agregaConstante(constantesS, cteC,cadena, aux);
                         memset(aux, 0, strlen(aux));
                     }else{
                         printf("Simbolo desconocido\n");//-----------------------------------------------------------simbolo desconocido
@@ -229,19 +239,29 @@ void preproceso(tlistaR *rotulos, tlistaE *constantes ,char archivo[], int* CS){
             i=largo+1;
         }            
     }
-    recorre=*constantes;
-    while(recorre!=NULL){
-        recorre->bloque+=(*CS);
-        recorre=recorre->sig;
+    
+    recorreS=*constantesS;
+    while(recorreS!=NULL){
+        recorreS->bloque+=(*CS);
+        recorreS=recorreS->sig;
     }
-    recorre=*constantes;
-    while(recorre!=NULL){
-        if(recorre->tipo)
-            printf("La constante %s tiene el valor de %d y ocupa un solo espacio", recorre->nombre, recorre->valor[0]);
+    
+    printf("Las constanes de tipo caracter y/o numericos son:\n");
+    recorreC=*cteC;
+    while(recorreC!=NULL){
+        printf("%s ", recorreC->nombre);
+        if(recorreC->tipo)
+            printf("%d\n", recorreC->valor);
             else
-                printf("La constante %s es %s y ocupa %d espacios", recorre->nombre, recorre->valor, recorre->tamanio);
-        printf("y iniciaria en el bloque %d del DS\n", recorre->bloque);
-        recorre=recorre->sig;
+                printf("%c\n", recorreC->valor);
+        recorreC=recorreC->sig;
+    }
+    printf("Las constantes de tipo string son:\n");
+
+    recorreS=*constantesS;
+    while(recorreS!=NULL){
+        printf("%s almacena %s yocupa %d espacios, de usarla sera reemplazada por el numero %d", recorreS->nombre, recorreS->valor, recorreS->tamanio, recorreS->bloque);
+        recorreS=recorreS->sig;
     }
     fclose(instasm);
 }

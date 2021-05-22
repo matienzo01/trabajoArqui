@@ -1,6 +1,6 @@
 \\ASM  DATA=50 Stack=20 
         text equ "Hola"
-        carac eq 'c'
+        carac equ 'c'
         num equ 20
                                 mov [10], 0 ;inicializo variables
          mov                   [20],    1

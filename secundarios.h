@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#define DIMS 80
+#define DIMS 100
 #define MAX 10
 
 typedef struct nodostring{
@@ -27,21 +27,30 @@ typedef struct nodoR{
 }nodoR;
 typedef nodoR* tlistaR;
 
-typedef struct nodoEQU{
+typedef struct nodoEQUS{
     char nombre[10];
     int bloque; //bloque de memoria que ocupara
-    int valor[10];
+    char valor[10];
     int tipo;
     int tamanio;
-    struct nodoEQU* sig;
-}nodoEQU;
+    struct nodoEQUS* sig;
+}nodoEQUS;
 
-typedef nodoEQU* tlistaE;
+typedef nodoEQUS* tlistaES;
+
+typedef struct NODOEQUC{
+    char nombre[10];
+    int valor;
+    int tipo;
+    struct  NODOEQUC* sig;    
+}NODOEQUC;
+
+typedef NODOEQUC* tlistaEC;
 
 //proce y func auxiliares
 int identificaBase(char);
 void agregarotulo(tlistaR*,char[],int);
-void agregaConstante(tlistaE*, char[], char[]);
+void agregaConstante(tlistaES*, tlistaEC*,char[], char[]);
 int codigooperando(char[]);
 int basebtodecimal(char[],int);
 int potencia(int,int);
@@ -49,3 +58,4 @@ void mayus(char[]);
 void muestramemoria(int[]);//despues borrar
 void muestralista(tlistastring);
 void eliminaCaracter(char *s, char c);
+int buscaConstante(tlistaES, char[]);
