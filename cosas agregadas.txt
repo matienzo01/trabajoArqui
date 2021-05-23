@@ -31,3 +31,4 @@
   - Probarla cuando este terminado por las dudas
   - Busca constante devuelve el valor de la constante pedida y sino devuelve FFF FFF (numero elegido para no causar stack overflow)
   - agregaConstante identifica bases de los numeros
+  - Las ctes string ahora pueden tener un especio en el medio y aceptan hasta una longitud de 10 caracteres

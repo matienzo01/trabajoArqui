@@ -61,9 +61,10 @@ void agregaConstante(tlistaES* constantesS, tlistaEC* ctesC,char nombre[] ,char 
         auxS->tipo=bandera;
         auxS->tamanio=strlen(valor);
         strcpy(auxS->valor, valor);
+        auxS->sig=NULL;
         if(*constantesS==NULL){
-            auxS->bloque=0;
-            auxS->sig=NULL;
+            auxS->bloque=1;
+            
             *constantesS=auxS;
         }else{
             recorreS=*constantesS;

@@ -66,6 +66,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
     int linearotulo;
     int huboerror;
     int lineasininstruccion;
+    int cantInstrucciones=-1; //vendria a ser un CS paralelo
     registroinstruccion instruccion;
     tlistaR rotulos;
     tlistaES ctesString;
@@ -115,6 +116,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                 switch (pasoDeLectura){
                     case 0:
                             if(buscarotulo(rotulos,cadena)==0xFFF){
+                                cantInstrucciones++;
                                 strcpy(instruccion.mnemonico,cadena);
                                 codmnemo=buscamnemonico(cadena);
                                 if(codmnemo!=0xFFF){
@@ -158,9 +160,9 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
             ++i;
         }  
         if(!huboerror && !lineasininstruccion)
-            generainstruccion(codmnemo,instruccion,&instruccionHexa,cantArgumentos,rotulos,errores,warnings,CS,informeserrores,informeswarnings);
+            generainstruccion(codmnemo,instruccion,&instruccionHexa,cantArgumentos,rotulos,errores,warnings,cantInstrucciones,informeserrores,informeswarnings);
         if(bandera)
-            imprimeLineas(instruccion,CS,cantArgumentos,instruccionHexa,lineasininstruccion,huboerror);
+            imprimeLineas(instruccion,cantInstrucciones,cantArgumentos,instruccionHexa,lineasininstruccion,huboerror);
         memoria[CS]=instruccionHexa;
         memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
     }
@@ -176,7 +178,7 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char ar
     FILE *instasm;
     char linea[DIMS];
     char cadena[DIMS]={0};
-    char aux[10]={0}; //esta cadena solo se usa para verificar el EQU y despues reutilizada para el valor
+    char aux[13]={0}; //esta cadena solo se usa para verificar el EQU y despues reutilizada para el valor
     int i;
     int j=0;
     int indice;
@@ -221,9 +223,14 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char ar
                         while(i<largo && linea[i]==' ')
                             ++i;
                         j=0;
-                        while(i<largo && linea[i]!=' ' && linea[i]!='\n'){
-                            aux[j++]=linea[i++];
-                        }
+                        if(linea[i]!=34)
+                            while(i<largo && linea[i]!=' ' && linea[i]!='\n'){
+                                aux[j++]=linea[i++];
+                            }
+                        else
+                            while(i<largo  && linea[i]!='\n'){
+                                aux[j++]=linea[i++];
+                            }
                         agregaConstante(constantesS, cteC,cadena, aux);
                         memset(aux, 0, strlen(aux));
                     }else{
@@ -260,7 +267,7 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char ar
 
     recorreS=*constantesS;
     while(recorreS!=NULL){
-        printf("%s almacena %s yocupa %d espacios, de usarla sera reemplazada por el numero %d", recorreS->nombre, recorreS->valor, recorreS->tamanio, recorreS->bloque);
+        printf("%s almacena {%s} y ocupa %d espacios, de usarla sera reemplazada por el numero %d\n", recorreS->nombre, recorreS->valor, recorreS->tamanio, recorreS->bloque);
         recorreS=recorreS->sig;
     }
     fclose(instasm);
