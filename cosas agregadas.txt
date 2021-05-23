@@ -24,3 +24,8 @@
  22/05/2021
   - Separacion de las constantes en 2 listas: una de strings y otra de caracteres y numeros. Los caracteres se almacena su correspondiente ASCII
   - El metodo agregaConstante ahora agrega cada cte a su correspondiente lista
+  - En "secundarios.c" agregue en codigooperando el caso de que el operando sea INDIRECTo, en binario es el 11
+  - En buscaargumento que devuelve el valor del argumento que va en la instruccion, agregue el caso de un operando indirecto tambien
+  . Para hacer lo que dice arriba agregue una funcion "operandoIndirecto" que con el argumento [AX] o [AX+3] o  [AX-constante] devuelve el valor, tengo que revisarla y
+  - Probarla cuando este terminado por las dudas
+  . 

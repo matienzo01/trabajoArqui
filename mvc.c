@@ -8,6 +8,7 @@ void determinaSegmentos(char*, int*, int);
 int buscarotulo(tlistaR,char[]);
 int buscamnemonico(char[]);
 int buscaargumento(char[]);
+int operandoindirecto(char[]);
 int buscaregistro(char[]);
 void imprimeLineas(registroinstruccion,int,int,int,int,int);
 void generainstruccion(int,registroinstruccion,int*,int,tlistaR,int*,int*,int,tlistastring*,tlistastring*);
@@ -362,16 +363,54 @@ int buscamnemonico(char mnemonico[]){
         return 4095;
 }
 
+int operandoindirecto(char argumento[]){
+    char reg[3];
+    reg[0]=argumento[1];
+    reg[1]=argumento[2];
+    int numRegistro=buscaregistro(reg);
+    int retorno;
+    if(argumento[3]==']') //era solo [AX] o [BX]
+        retorno=numRegistro&0x00F;
+    else{                //puede ser [AX+-algo]
+        int offset=1;
+        char extra[10];memset(extra,0,strlen(extra));               
+        if(argumento[3]=='-')
+            offset=-1;
+        int z=0; //argumento[4] ya tiene el primer caracter del offset
+        int esNumero=1;
+        while (z+4<=strlen(argumento) && argumento[4+z]!=']'){
+            extra[z]=argumento[4+z];
+            if (esNumero==1 && (extra[z]<'0' || extra[z]>'9') )
+                esNumero=0;
+        }
+        if(esNumero)
+            offset*=atoi(extra);
+        else{ //se suma o resta una constante, en "extra" esta cargada
+            //int valorconstante=buscaconstante(extra);
+            //offset*=valorconstante;
+            //busca el valor de la constante, y lo pone en el offset
+            //lo de HIGH y LOW y calculos de direcciones no termine de verlo, pero creo que es tarea del ejectur o eso espero jajaja
+        }
+        retorno= offset<<4 & 0xFF0 | numRegistro & 0x00F; 
+    }
+    return retorno;
+}
+
 int buscaargumento(char argumento[]){
     int i=0,baseb;
     char aux[MAX];memset(aux,0,strlen(aux));
-    mayus(argumento);
-    if(argumento[0]>='A' && argumento[0]<='Z')
-        return buscaregistro(argumento);
+    char aux2[MAX];strcpy(aux2,argumento);
+    mayus(aux2);
+    if(aux2[0]>='A' && aux2[0]<='Z') //aca entraeria el caso que venga una constante como argumento
+        return buscaregistro(aux2);
     else{
-        if(argumento[0]=='[')
-            for(int i=1;i<strlen(argumento)-1;i++)
-                aux[i-1]=argumento[i];
+        if(argumento[0]=='['){ //puede ser DIRECTO ejemplo [10] o puede ser INDIRECTO ejemplo [CX] o [BX+2]
+            if(argumento[1]>='0' && argumento[1]<='9')
+                for(int i=1;i<strlen(argumento)-1;i++)
+                    aux[i-1]=argumento[i];
+            else
+                return operandoindirecto(argumento);
+        }
         else
             for(int i=0;i<strlen(argumento);i++)
                 aux[i]=argumento[i];
@@ -380,8 +419,13 @@ int buscaargumento(char argumento[]){
             return atoi(aux);
         else if(baseb<=16)
             return basebtodecimal(aux,baseb);
-        else
-            return (int)argumento[1];//era 'A' o algo asi        
+        else{
+            char comilla[2]="'"; //solucion del ej 5 de la primer entrega, contempla el ' ' como numero 32
+            if(argumento[1]=='\0' || argumento[1]==comilla[0])
+                return 32;
+            else
+                return (int)argumento[1]; //solucion tmb del ej 5 que en vez de 'o' devolvia 'O', la solcuon es en realidad el aux2 nuevo que hay
+        }      
     }
 }
 
@@ -452,8 +496,8 @@ void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *inst
             }
             else if(codigomnemo==0xF0)
                 *instruccionhexa=codigomnemo<<24 & 0xFF000000 | args[0] & 0x00000FFF;
-                else
-                    *instruccionhexa=codigomnemo<<24 & 0xFF000000 | codoperando[0]<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | args[0] & 0x00000FFF;
+            else
+                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | codoperando[0]<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | args[0] & 0x00000FFF;
         else
             *instruccionhexa=codigomnemo<<28 & 0xF0000000 | codoperando[0]<<26 & 0x0C000000 | codoperando[1]<<24 & 0x03000000 | args[0]<<12 & 0x00FFF000 | args[1] & 0x00000FFF;
 }
