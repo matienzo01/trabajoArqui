@@ -12,6 +12,7 @@ OTRO:   cmp [20], 100 ;compara
         add [20], [10]
                 mov AX, %F01
         mov CX, 1
+        otro equ 200
                         mov DX, 10
                         not [30]
         sys %F ;print [10] en decimal

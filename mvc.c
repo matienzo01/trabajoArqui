@@ -3,7 +3,7 @@
 //proce y func para funcionar
 void traductor(FILE*,int[],int,char[],int*,int*,tlistastring*,tlistastring*,int*);
 
-void preproceso(tlistaR*, tlistaES*, tlistaEC*,char[], int*);
+void preproceso(tlistaR*, tlistaES*, tlistaEC*,char[], int*, int*);
 void determinaSegmentos(char*, int*, int);
 int buscarotulo(tlistaR,char[]);
 int buscamnemonico(char[]);
@@ -74,7 +74,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
 
     int argumentosCargados,codmnemo;
 
-    preproceso(&rotulos, &ctesString, &ctesCarac, archivo, &CS);    
+    preproceso(&rotulos, &ctesString, &ctesCarac, archivo, &CS, errores);    
     memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
 
     while(fgets(linea,DIMS,instasm)!=NULL){
@@ -132,7 +132,8 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                                 pasoDeLectura=1;
                                 memset(cadena,0,strlen(cadena));
                             }
-                            else{//era un rotulo
+                            else{//era un rotulo o una constante
+
                                 strcpy(instruccion.rotulo,cadena);
                                 memset(cadena,0,strlen(cadena));
                             }
@@ -174,7 +175,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
 
 //proce y func para funcionar
 
-void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char archivo[], int* CS){
+void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char archivo[], int* CS, int* errores){
     FILE *instasm;
     char linea[DIMS];
     char cadena[DIMS]={0};
@@ -231,7 +232,13 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char ar
                             while(i<largo  && linea[i]!='\n'){
                                 aux[j++]=linea[i++];
                             }
-                        agregaConstante(constantesS, cteC,cadena, aux);
+                        if(buscaConstante(*constantesS, *cteC, cadena)==0xFFFFFF && buscarotulo(*rotulos, cadena)==0xFFF)
+                            agregaConstante(constantesS, cteC,cadena, aux);
+                        else{
+                            printf("Simbolo duplicado al agregar cte\n");
+                            i=strlen(linea)+1;
+                        }
+                            
                         memset(aux, 0, strlen(aux));
                     }else{
                         printf("Simbolo desconocido\n");//-----------------------------------------------------------simbolo desconocido
