@@ -58,4 +58,5 @@ void mayus(char[]);
 void muestramemoria(int[]);//despues borrar
 void muestralista(tlistastring);
 void eliminaCaracter(char *s, char c);
-int buscaConstante(tlistaES, char[]);
+int buscaConstante(tlistaES, tlistaEC,char[]);
+int buscaregistro(char[]);

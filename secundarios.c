@@ -27,6 +27,7 @@ void agregaConstante(tlistaES* constantesS, tlistaEC* ctesC,char nombre[] ,char 
     tlistaES auxS;
     tlistaES recorreS;
     tlistaEC auxC;
+    int base;
 
     int bandera; //0 significa numero, 1 significa caracter, 2 significa string
 
@@ -46,8 +47,11 @@ void agregaConstante(tlistaES* constantesS, tlistaEC* ctesC,char nombre[] ,char 
         strcpy(auxC->nombre, nombre);
         if(bandera)
             auxC->valor= (int) (*valor);
-        else
-            auxC->valor= atoi(valor);
+        else{
+            base=identificaBase(*valor);
+            auxC->valor= basebtodecimal(valor, base);
+        }
+            
         auxC->sig=*ctesC;
         *ctesC=auxC;
     }else{
@@ -146,13 +150,33 @@ void eliminaCaracter(char *s, char c)
     s[writer]=0;
 }
 
-int buscaConstante(tlistaES constantes, char nombre[]){
-    int respuesta=-1;
-    while(constantes!=NULL && respuesta==-1){
-        if(strcasecmp(constantes->nombre, nombre)==0){
-            respuesta=constantes->bloque;
+int buscaConstante(tlistaES constantesS, tlistaEC ctesC, char nombre[]){
+    int respuesta=0xFFFFFF; //supone q no lo encuentra, llega hasta ahi para no dar stack overflow
+    int bandera=0;
+
+    while(constantesS!=NULL && !bandera){
+        if(strcasecmp(constantesS->nombre, nombre)==0){
+            respuesta=constantesS->bloque;
+            bandera=1;
         }
-        constantes=constantes->sig;
+        constantesS=constantesS->sig;
+    }
+    if(!bandera){
+        while(ctesC!=NULL && !bandera){
+            if(strcasecmp(ctesC->nombre, nombre)==0){
+                respuesta=ctesC->valor;
+                bandera=1;
+            }
+            ctesC=ctesC->sig;
+        }
     }
     return respuesta;
+}
+
+int buscaregistro(char registro[]){
+    int i=0;
+    nombre registros[16]={"DS","SS","ES","CS","HP","IP","SP","BP","CC","AC","AX","BX","CX","DX","EX","FX"};
+    while(strcasecmp(registro,registros[i])!=0)
+        ++i;
+    return i;
 }

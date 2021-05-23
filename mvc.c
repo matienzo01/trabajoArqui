@@ -9,7 +9,6 @@ int buscarotulo(tlistaR,char[]);
 int buscamnemonico(char[]);
 int buscaargumento(char[]);
 int operandoindirecto(char[]);
-int buscaregistro(char[]);
 void imprimeLineas(registroinstruccion,int,int,int,int,int);
 void generainstruccion(int,registroinstruccion,int*,int,tlistaR,int*,int*,int,tlistastring*,tlistastring*);
 void agregainforme(tlistastring*,char[],int,char[],char[]);
@@ -100,7 +99,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                 j=-1;
                 while(linea[i]!=' ' && i<strlen(linea) && linea[i]!='\n' && linea[i]!=',' && linea[i]!=';')
                     cadena[++j]=linea[i++];
-                if(buscaConstante(ctesString, cadena)!=-1){
+                if(buscaConstante(ctesString, ctesCarac, cadena)!=0xFFFFFF){
                     lineasininstruccion=1;
                     pasoDeLectura=3;
                     i=strlen(linea)+1;
@@ -427,14 +426,6 @@ int buscaargumento(char argumento[]){
                 return (int)argumento[1]; //solucion tmb del ej 5 que en vez de 'o' devolvia 'O', la solcuon es en realidad el aux2 nuevo que hay
         }      
     }
-}
-
-int buscaregistro(char registro[]){
-    int i=0;
-    nombre registros[16]={"DS","SS","ES","CS","HP","IP","SP","BP","CC","AC","AX","BX","CX","DX","EX","FX"};
-    while(strcasecmp(registro,registros[i])!=0)
-        ++i;
-    return i;
 }
 
 void imprimeLineas(registroinstruccion instruccion, int CS, int cantidadArgumetos, int instruccionHexa,int sininstruccion,int huboerror){
