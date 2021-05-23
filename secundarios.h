@@ -16,7 +16,7 @@ typedef char nombre[MAX];
 typedef struct{
     char rotulo[DIMS];
     char mnemonico[MAX];
-    nombre argumentos[4];
+    nombre argumentos[10]; //22/05 - le cambie de 4 a  10, mas tamaño para los operandos indirectos
     char comentario[DIMS];
 }registroinstruccion;
 
