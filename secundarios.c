@@ -11,7 +11,6 @@ int identificaBase(char dato){
     else if(dato=='-' || (dato>='0' && dato<='9'))
         return 10;
     else
-
         return 99;//si no tenia ningun simbolo, y tampoco era directamente el numero en decimal, entonces era un caracter entre comillas
 }
 
@@ -70,13 +69,21 @@ int codigooperando(char argumento[]){
     while(argumento[i]!='[' && comilla[0]!=argumento[i] && (argumento[i]<'0' || argumento[i]>'9') && (toupper(argumento[i])<'A' || toupper(argumento[i])>'Z'))
         ++i;
     caracter=toupper(argumento[i]);
-    if(caracter=='[')
-        return 2;
-    else
-        if(caracter>='A' && caracter<='Z' && strlen(argumento)==2)
-            return 1;
+    if(caracter=='['){
+        if(argumento[i+1]>='0' && argumento[i+1]<='9')
+            return 2;
+        else 
+            return 3;
+    }
+    else{
+        char auxiliar[3];
+        auxiliar[0]=caracter;
+        auxiliar[1]=argumento[i+1];
+        if(buscaregistro(auxiliar)==16) //antes decia caracter>='A' && caracter<='Z' && strlen(argumento)==2 , pero salia un error en el 4 de la primer entrega
+            return 1; //si el buscareg da 16, lo que se le mando no era un registro tipo AX BX DS BP SP
         else
             return 0;
+    }
 }
 
 int basebtodecimal(char cadena[],int baseb){
