@@ -1,0 +1,34 @@
+20/05/2021
+ - El procedimiento genera bin agrega la cabezera al binario
+ - EL procedimiento genera segmentos agrega a la memoria los valores de los segmentos
+      + Si estan los segmentos asigna los valores
+      + Si falta alguno le asigna 1024
+      + Si alguno esta mal escrito corta la ejecucion de esa linea (manteniendo los que ya habia leido)
+
+21/05/2021
+ - Agregado tipo de lista de constantes
+ - Renombrado algunos DS por CS (en realidad estabamos hablando del Code segment y no del data)
+ - Renombrado el procedimiento "cargarotulos" a "preproceso" que ademas de cargar los rotulos, creara una lista de las constantes NO LAS PONE EN LA MEMORIA 
+ - Agregado los menmonicos nuevos y actualizado el calculo para su obtencion
+ - Eliminado el incremento de CS en el traductor
+ - Preproceso carga los 3 tipos de constante y los muestra por pantalla, ademas de cargar los rotulos *1, 2
+       + Agrega a su vez un procedimiento para eliminar un determinado caracter de un string
+       + Los rotulos se identifican por los :, aumentan el CS
+       + Las constantes validan su ingreso buscando el "equ" de no encontrarlo salta un error
+       + Los mnemonicos no se proceso, simplemente aumentan el CS
+       + El header se identifica, pero no se procesa
+
+ *1 La muestra por pantalla se puede sacar, es simplemente para ver si todo estaba saliendo correctamente. El carga constante en una parte tiene un cast medio extraño pero funciona, despues lo probamos mejor
+ *2 La lista inserta al final, asi al momento de cargarlos a la memoria (TODAVIA NO IMPLEMENTADO) se mas facil, para poder cargar a medida q se recorre
+
+ 22/05/2021
+  - Separacion de las constantes en 2 listas: una de strings y otra de caracteres y numeros. Los caracteres se almacena su correspondiente ASCII
+  - El procedimiento agregaConstante ahora agrega cada cte a su correspondiente lista
+  - El procedimiento buscarregistro fue movido a secundarios por tema de compilacion
+  - En "secundarios.c" agregue en codigooperando el caso de que el operando sea INDIRECTO, en binario es el 11
+  - En buscaargumento que devuelve el valor del argumento que va en la instruccion, agregue el caso de un operando indirecto tambien
+  - Para hacer lo que dice arriba agregue una funcion "operandoIndirecto" que con el argumento [AX] o [AX+3] o  [AX-constante] devuelve el valor, tengo que revisarla y
+  - Probarla cuando este terminado por las dudas
+  - Busca constante devuelve el valor de la constante pedida y sino devuelve FFF FFF (numero elegido para no causar stack overflow)
+  - agregaConstante identifica bases de los numeros
+  - Las ctes string ahora pueden tener un especio en el medio y aceptan hasta una longitud de 10 caracteres

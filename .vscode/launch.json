@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
-            "args": ["instrucciones.asm","cacho.bin","-o"],
+            "args": ["instrucciones.asm","prueba.bin"],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
             "environment": [],

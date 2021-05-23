@@ -1,3 +1,8 @@
+\\ASM  DATA=50 Stack=20 
+        text equ "Hola"
+        text2 equ "que ondas?"
+        carac equ 'c'
+        num equ @20
                                 mov [10], 0 ;inicializo variables
          mov                   [20],    1
 OTRO:   cmp [20], 100 ;compara
