@@ -59,6 +59,7 @@ void muestramemoria(int[]);//despues borrar
 void muestralista(tlistastring);
 void eliminaCaracter(char *s, char c);
 int buscaConstante(tlistaES, tlistaEC,char[]);
+int esString(tlistaES,char[]);
 int buscaregistro(char[]);
 int buscaTipoCte(tlistaES, tlistaEC,char[]);
 int buscaSimbolo(tlistastring, char[]);

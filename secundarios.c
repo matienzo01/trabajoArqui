@@ -98,10 +98,10 @@ int codigooperando(char argumento[]){
         char auxiliar[3];
         auxiliar[0]=caracter;
         auxiliar[1]=argumento[i+1];
-        if(buscaregistro(auxiliar)==16) //antes decia caracter>='A' && caracter<='Z' && strlen(argumento)==2 , pero salia un error en el 4 de la primer entrega
-            return 1; //si el buscareg da 16, lo que se le mando no era un registro tipo AX BX DS BP SP
+        if(buscaregistro(auxiliar)<=15) //antes decia caracter>='A' && caracter<='Z' && strlen(argumento)==2 , pero salia un error en el 4 de la primer entrega
+            return 1; 
         else
-            return 0;
+            return 0;//si el buscareg da 16, lo que se le mando no era un registro tipo AX BX DS BP SP,era un rotulo por ejemplo
     }
 }
 
@@ -156,7 +156,11 @@ void eliminaCaracter(char *s, char c)
 
     s[writer]=0;
 }
-
+int esString(tlistaES strings,char arg[]){
+    while(strings!=NULL && strcasecmp(strings->nombre,arg)!=0)
+        strings=strings->sig;
+    return strings!=NULL;
+}
 int buscaConstante(tlistaES constantesS, tlistaEC ctesC, char nombre[]){
     int respuesta=0xFFFFFF; //supone q no lo encuentra, llega hasta ahi para no dar stack overflow
     int bandera=0;

@@ -7,10 +7,10 @@ void preproceso(tlistaR*, tlistaES*, tlistaEC*, tlistastring*, char[], int*, int
 void determinaSegmentos(char*, int*, int);
 int buscarotulo(tlistaR,char[]);
 int buscamnemonico(char[]);
-int buscaargumento(char[]);
-int operandoindirecto(char[]);
+int buscaargumento(char[],int*,tlistastring*,int,tlistaES,tlistaEC);
+int operandoindirecto(char[],int*,tlistastring*,int,tlistaES,tlistaEC);
 void imprimeLineas(registroinstruccion,int,int,int,int,int);
-void generainstruccion(int,registroinstruccion,int*,int,tlistaR,int*,int*,int,tlistastring*,tlistastring*);
+void generainstruccion(int,registroinstruccion,int*,int,tlistaR,int*,int*,int,tlistastring*,tlistastring*,tlistaES,tlistaEC);
 void agregainforme(tlistastring*,char[],int,char[],char[]);
 void generabin(int[], char[], FILE*,int);
 
@@ -188,8 +188,8 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
             ++i;
         }  
         if(!huboerror && !lineasininstruccion)
-            generainstruccion(codmnemo,instruccion,&instruccionHexa,cantArgumentos,rotulos,errores,warnings,cantInstrucciones,informeserrores,informeswarnings);
-        if(parametro && bandera)
+            generainstruccion(codmnemo,instruccion,&instruccionHexa,cantArgumentos,rotulos,errores,warnings,cantInstrucciones,informeserrores,informeswarnings,ctesString,ctesCarac);
+        if(bandera && parametro)
             imprimeLineas(instruccion,cantInstrucciones,cantArgumentos,instruccionHexa,lineasininstruccion,huboerror);
         memoria[CS]=instruccionHexa;
         memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
@@ -285,11 +285,11 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistas
         recorreS=recorreS->sig;
     }
 
-    /*recorre=*simbolos;
+    recorre=*simbolos;
     while(recorre!=NULL){
         printf("el simbolo %s aparece un total de %d veces\n", recorre->cadena, buscaSimbolo(*simbolos, recorre->cadena));
         recorre=recorre->sig;
-    }*/
+    }
     
     fclose(instasm);
 }
@@ -390,14 +390,14 @@ int buscamnemonico(char mnemonico[]){
         return 4095;
 }
 
-int operandoindirecto(char argumento[]){
+int operandoindirecto(char argumento[],int* errores,tlistastring* informeserrores,int CS,tlistaES ctesString,tlistaEC ctesCarac){
     char reg[3];
     reg[0]=argumento[1];
     reg[1]=argumento[2];
     int numRegistro=buscaregistro(reg);
     int retorno;
     if(argumento[3]==']') //era solo [AX] o [BX]
-        retorno=numRegistro&0x00F;
+        retorno= 0x000 | numRegistro&0x00F;
     else{                //puede ser [AX+-algo]
         int offset=1;
         char extra[10];memset(extra,0,strlen(extra));               
@@ -413,46 +413,70 @@ int operandoindirecto(char argumento[]){
         if(esNumero)
             offset*=atoi(extra);
         else{ //se suma o resta una constante, en "extra" esta cargada
-            //int valorconstante=buscaconstante(extra);
-            //offset*=valorconstante;
-            //busca el valor de la constante, y lo pone en el offset
-            //lo de HIGH y LOW y calculos de direcciones no termine de verlo, pero creo que es tarea del ejectur o eso espero jajaja
+            int valorconst=buscaConstante(ctesString,ctesCarac,extra);
+            if(valorconst==0xFFFFFF){
+                ++(*errores);
+                agregainforme(informeserrores,"En la linea ",CS," --> Simbolo Desconocido: ",extra);
+            }
+            offset*=valorconst;
         }
         retorno= offset<<4 & 0xFF0 | numRegistro & 0x00F; 
     }
     return retorno;
 }
 
-int buscaargumento(char argumento[]){
+int buscaargumento(char argumento[],int *errores,tlistastring* informeserrores,int CS,tlistaES ctesString,tlistaEC ctesCarac){
     int i=0,baseb;
     char aux[MAX];memset(aux,0,strlen(aux));
     char aux2[MAX];strcpy(aux2,argumento);
     mayus(aux2);
-    if(aux2[0]>='A' && aux2[0]<='Z') //aca entraeria el caso que venga una constante como argumento
-        return buscaregistro(aux2);
+    if(aux2[0]>='A' && aux2[0]<='Z'){ //aca entraeria el caso que venga una constante cuyo nombre empieza con una letra
+        int valor=buscaregistro(aux2);
+        if(valor<=15)
+            return valor;
+        else{
+            valor=buscaConstante(ctesString,ctesCarac,argumento);
+            if(valor==0xFFFFFF){
+                ++(*errores);
+                agregainforme(informeserrores,"En la linea ",CS," --> Simbolo Desconocido: ",argumento);
+            }        
+            return valor;
+        }
+    }
     else{
         if(argumento[0]=='['){ //puede ser DIRECTO ejemplo [10] o puede ser INDIRECTO ejemplo [CX] o [BX+2]
             if(argumento[1]>='0' && argumento[1]<='9')
                 for(int i=1;i<strlen(argumento)-1;i++)
                     aux[i-1]=argumento[i];
             else
-                return operandoindirecto(argumento);
+                return operandoindirecto(argumento,errores,informeserrores,CS,ctesString,ctesCarac);
         }
         else
-            for(int i=0;i<strlen(argumento);i++)
-                aux[i]=argumento[i];
+            strcpy(aux,argumento);//habia un for antes
+        //------
+        //Comprueba si el argumento no era una constante cuyo nombre empezaba con un numero
+        int k=1,esNumero=1; //k empieza en 1 en vez de 0 porque se sabe que el primer caracter no es una letra y
+                            // ademas para evitar analizar los posibles simbolos # % @ ' 
+        while(esNumero && k<strlen(aux)){
+            if(aux[k]<'0' || aux[k]>'9')
+                esNumero=0;
+            k++;
+        }
+        if(!esNumero)
+            return buscaConstante(ctesString,ctesCarac,aux);
+        //------
         baseb=identificaBase(*aux);
         if(baseb==10)
             return atoi(aux);
         else if(baseb<=16)
             return basebtodecimal(aux,baseb);
         else{
-            char comilla[2]="'"; //solucion del ej 5 de la primer entrega, contempla el ' ' como numero 32
+            char comilla[2]="'"; //solucion del ej 5 de la primer entrega, contempla el ' ' y el '  como numero 32
             if(argumento[1]=='\0' || argumento[1]==comilla[0])
                 return 32;
             else
                 return (int)argumento[1]; //solucion tmb del ej 5 que en vez de 'o' devolvia 'O', la solcuon es en realidad el aux2 nuevo que hay
-        }      
+        }//poner caso que el nombre de una constante empieze con un numero?      
     }
 }
 
@@ -483,16 +507,23 @@ else
     printf("%59s %s\n","",instruccion.comentario);
 }
 
-void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *instruccionhexa,int cantargumentos,tlistaR rotulos,int *errores,int *warnings,int CS,tlistastring *informeserrores,tlistastring *informeswarnings){
+void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *instruccionhexa,int cantargumentos,tlistaR rotulos,int *errores,int *warnings,int CS,tlistastring *informeserrores,tlistastring *informeswarnings,tlistaES ctesString,tlistaEC ctesCarac){
     int i,linearotulo,esrotulo;
     int codoperando[3];
     long int args[3];
     for(int i=0;i<cantargumentos;i++){
-        codoperando[i]=codigooperando(instruccion.argumentos[i]);
+        if(buscaConstante(ctesString,ctesCarac,instruccion.argumentos[i])==0xFFFFFFFF)
+            codoperando[i]=codigooperando(instruccion.argumentos[i]);
+        else
+            if(esString(ctesString,instruccion.argumentos[i]))
+                codoperando[i]=3;
+            else
+                codoperando[i]=2;
+        
         esrotulo=codoperando[i]==0 && toupper(instruccion.argumentos[i][0])>='A' && toupper(instruccion.argumentos[i][0])<='Z';
         if(!esrotulo){
-            args[i]=buscaargumento(instruccion.argumentos[i]);
-            args[i]=buscaargumento(instruccion.argumentos[i]);//dejar las dos lineas repetidas, nose por que pero anda si esta dos veces al menos a mi
+            args[i]=buscaargumento(instruccion.argumentos[i],errores,informeserrores,CS,ctesString,ctesCarac);
+            args[i]=buscaargumento(instruccion.argumentos[i],errores,informeserrores,CS,ctesString,ctesCarac);//--no borrar
             if(codoperando[i]==0 && (args[i]>(4095+((-cantargumentos+2)*61440))  ))//se trunca el operando
             {
                 ++(*warnings);
