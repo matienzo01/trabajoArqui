@@ -150,7 +150,11 @@ void eliminaCaracter(char *s, char c)
 
     s[writer]=0;
 }
-
+int esString(tlistaES strings,char arg[]){
+    while(strings!=NULL && strcasecmp(strings->bloque,arg)!=0)
+        strings=strings->sig;
+    return strings!=NULL;
+}
 int buscaConstante(tlistaES constantesS, tlistaEC ctesC, char nombre[]){
     int respuesta=0xFFFFFF; //supone q no lo encuentra, llega hasta ahi para no dar stack overflow
     int bandera=0;
