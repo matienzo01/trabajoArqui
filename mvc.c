@@ -376,7 +376,7 @@ int operandoindirecto(char argumento[],int* errores,tlistastring* informeserrore
     int numRegistro=buscaregistro(reg);
     int retorno;
     if(argumento[3]==']') //era solo [AX] o [BX]
-        retorno=numRegistro&0x00F;
+        retorno= 0x000 | numRegistro&0x00F;
     else{                //puede ser [AX+-algo]
         int offset=1;
         char extra[10];memset(extra,0,strlen(extra));               
@@ -494,11 +494,15 @@ void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *inst
         if(buscaConstante(ctesString,ctesCarac,instruccion.argumentos[i])==0xFFFFFFFF)
             codoperando[i]=codigooperando(instruccion.argumentos[i]);
         else
-            codoperando[i]=3;//para no mandar la lista en el metodo codigooperando
+            if(esString(ctesString,instruccion.argumentos[i]))
+                codoperando[i]=3;
+            else
+                codoperando[i]=2;
+        
         esrotulo=codoperando[i]==0 && toupper(instruccion.argumentos[i][0])>='A' && toupper(instruccion.argumentos[i][0])<='Z';
         if(!esrotulo){
             args[i]=buscaargumento(instruccion.argumentos[i],errores,informeserrores,CS,ctesString,ctesCarac);
-            args[i]=buscaargumento(instruccion.argumentos[i],errores,informeserrores,CS,ctesString,ctesCarac);//--
+            args[i]=buscaargumento(instruccion.argumentos[i],errores,informeserrores,CS,ctesString,ctesCarac);//--no borrar
             if(codoperando[i]==0 && (args[i]>(4095+((-cantargumentos+2)*61440))  ))//se trunca el operando
             {
                 ++(*warnings);
