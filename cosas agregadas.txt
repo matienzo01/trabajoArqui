@@ -32,3 +32,9 @@
   - Busca constante devuelve el valor de la constante pedida y sino devuelve FFF FFF (numero elegido para no causar stack overflow)
   - agregaConstante identifica bases de los numeros
   - Las ctes string ahora pueden tener un especio en el medio y aceptan hasta una longitud de 10 caracteres
+
+23/05/2021
+ - agregaConstante no agrega ctes duplicadas o que posean nombre de otro rotulo
+
+24/05/2021
+ - Se informa en la consola la declaracion de ctes

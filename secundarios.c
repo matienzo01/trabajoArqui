@@ -49,9 +49,13 @@ void agregaConstante(tlistaES* constantesS, tlistaEC* ctesC,char nombre[] ,char 
             auxC->valor= (int) (*valor);
         else{
             base=identificaBase(*valor);
-            auxC->valor= basebtodecimal(valor, base);
-        }
+            if(base!=10 || *valor=='#')
+                auxC->valor= basebtodecimal(valor, base);
+            else
+                auxC->valor=atoi(valor);
             
+        }
+        auxC->tipo=bandera;
         auxC->sig=*ctesC;
         *ctesC=auxC;
     }else{
@@ -180,4 +184,27 @@ int buscaregistro(char registro[]){
     while(strcasecmp(registro,registros[i])!=0)
         ++i;
     return i;
+}
+
+int buscaTipoCte(tlistaES constantesS, tlistaEC ctesC, char nombre[]){
+    int respuesta=4; //supone q no lo encuentra
+    int bandera=0;
+
+    while(constantesS!=NULL && !bandera){
+        if(strcasecmp(constantesS->nombre, nombre)==0){
+            respuesta=constantesS->tipo;
+            bandera=1;
+        }
+        constantesS=constantesS->sig;
+    }
+    if(!bandera){
+        while(ctesC!=NULL && !bandera){
+            if(strcasecmp(ctesC->nombre, nombre)==0){
+                respuesta=ctesC->tipo;
+                bandera=1;
+            }
+            ctesC=ctesC->sig;
+        }
+    }
+    return respuesta;
 }

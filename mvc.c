@@ -104,6 +104,15 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                     lineasininstruccion=1;
                     pasoDeLectura=3;
                     i=strlen(linea)+1;
+                    if(bandera){
+                        printf("Se declara la constante de nombre %s ", cadena);
+                        if(buscaTipoCte(ctesString, ctesCarac, cadena)==0 || buscaTipoCte(ctesString, ctesCarac, cadena)==1){
+                            printf("cuyo valor es de %d", buscaConstante(ctesString, ctesCarac, cadena));
+                        }else{
+                            printf("que se almacena en el bloque %d", buscaConstante(ctesString, ctesCarac, cadena));
+                        }
+                    }
+                    
                     memset(cadena, 0, strlen(cadena));
                 }
                 if((linea[i]==';' || linea[i]=='\n' || linea[i]==92) && pasoDeLectura==0 && strlen(cadena)==0){//estaba buscando mnemonico y encontro comentario o linea en blanco   
@@ -260,7 +269,7 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char ar
         recorreS=recorreS->sig;
     }
     
-    printf("Las constanes de tipo caracter y/o numericos son:\n");
+    /*printf("Las constanes de tipo caracter y/o numericos son:\n");
     recorreC=*cteC;
     while(recorreC!=NULL){
         printf("%s ", recorreC->nombre);
@@ -276,7 +285,7 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char ar
     while(recorreS!=NULL){
         printf("%s almacena {%s} y ocupa %d espacios, de usarla sera reemplazada por el numero %d\n", recorreS->nombre, recorreS->valor, recorreS->tamanio, recorreS->bloque);
         recorreS=recorreS->sig;
-    }
+    }*/
     fclose(instasm);
 }
 
