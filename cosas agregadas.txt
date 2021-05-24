@@ -38,3 +38,8 @@
 
 24/05/2021
  - Se informa en la consola la declaracion de ctes
+ - Solucionado problema: al escribir mal un mnemonico no cargaba constantes declaradas debajo
+ - Implementado lista simbolos
+     + A la hora de agregar un rotulo o cte se agrega a la lista de simbolos
+     + buscaSimbolos retorna la cantidad de apariciones de un simbolos (sirve para encontrar duplicados)
+ - Todos los simbolos se almacenan en minusculas para facilitar la busqueda

@@ -61,3 +61,5 @@ void eliminaCaracter(char *s, char c);
 int buscaConstante(tlistaES, tlistaEC,char[]);
 int buscaregistro(char[]);
 int buscaTipoCte(tlistaES, tlistaEC,char[]);
+int buscaSimbolo(tlistastring, char[]);
+void agregaSimbolos(tlistastring*, char[]);

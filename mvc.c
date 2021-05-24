@@ -3,7 +3,7 @@
 //proce y func para funcionar
 void traductor(FILE*,int[],int,char[],int*,int*,tlistastring*,tlistastring*,int*);
 
-void preproceso(tlistaR*, tlistaES*, tlistaEC*,char[], int*, int*);
+void preproceso(tlistaR*, tlistaES*, tlistaEC*, tlistastring*, char[], int*, int*);
 void determinaSegmentos(char*, int*, int);
 int buscarotulo(tlistaR,char[]);
 int buscamnemonico(char[]);
@@ -71,10 +71,11 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
     tlistaR rotulos;
     tlistaES ctesString;
     tlistaEC ctesCarac;
+    tlistastring simbolos;
 
     int argumentosCargados,codmnemo;
 
-    preproceso(&rotulos, &ctesString, &ctesCarac, archivo, &CS, errores);    
+    preproceso(&rotulos, &ctesString, &ctesCarac, &simbolos, archivo, &CS, errores);    
     memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
 
     while(fgets(linea,DIMS,instasm)!=NULL){
@@ -105,7 +106,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                     pasoDeLectura=3;
                     i=strlen(linea)+1;
                     if(bandera){
-                        printf("Se declara la constante de nombre %s ", cadena);
+                        printf("Se declara la constante de nombre {%s} ", cadena);
                         if(buscaTipoCte(ctesString, ctesCarac, cadena)==0 || buscaTipoCte(ctesString, ctesCarac, cadena)==1){
                             printf("cuyo valor es de %d", buscaConstante(ctesString, ctesCarac, cadena));
                         }else{
@@ -137,6 +138,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                                     ++(*errores);
                                     agregainforme(informeserrores,"En la linea ",CS+1," no existe el mnemonico : ",instruccion.mnemonico);
                                     instruccionHexa=0xFFFFFFFF;
+                                    i=strlen(linea)+1;
                                 }
                                 pasoDeLectura=1;
                                 memset(cadena,0,strlen(cadena));
@@ -184,7 +186,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
 
 //proce y func para funcionar
 
-void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char archivo[], int* CS, int* errores){
+void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistastring* simbolos, char archivo[], int* CS, int* errores){
     FILE *instasm;
     char linea[DIMS];
     char cadena[DIMS]={0};
@@ -193,10 +195,10 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char ar
     int j=0;
     int indice;
     int largo=sizeof(linea);
-    *rotulos=NULL; *constantesS=NULL; *cteC=NULL;
+    *rotulos=NULL; *constantesS=NULL; *cteC=NULL; *simbolos=NULL;
 
     tlistaES recorreS;
-    tlistaEC recorreC;
+    tlistastring recorre;
 
     *CS=-1;
     instasm=fopen(archivo,"r");
@@ -218,6 +220,8 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char ar
             }else if(cadena[indice-1]==':'){ //si es un rotulo
                 (*CS)++;
                 agregarotulo(rotulos,cadena,(*CS));
+                eliminaCaracter(cadena, ':');
+                agregaSimbolos(simbolos, cadena);
                 i=largo+1;
             }else{
                 i++;
@@ -241,16 +245,12 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char ar
                             while(i<largo  && linea[i]!='\n'){
                                 aux[j++]=linea[i++];
                             }
-                        if(buscaConstante(*constantesS, *cteC, cadena)==0xFFFFFF && buscarotulo(*rotulos, cadena)==0xFFF)
-                            agregaConstante(constantesS, cteC,cadena, aux);
-                        else{
-                            printf("Simbolo duplicado al agregar cte\n");
-                            i=strlen(linea)+1;
-                        }
-                            
+                        agregaConstante(constantesS, cteC,cadena, aux);
+                        agregaSimbolos(simbolos, cadena);   
                         memset(aux, 0, strlen(aux));
                     }else{
                         printf("Simbolo desconocido\n");//-----------------------------------------------------------simbolo desconocido
+                        memset(aux, 0, strlen(aux));
                     }
                 }else{
                     printf("Simbolo desconocido\n");//----------------------------------------------------------------simbolo desconocido
@@ -268,24 +268,13 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, char ar
         recorreS->bloque+=(*CS);
         recorreS=recorreS->sig;
     }
-    
-    /*printf("Las constanes de tipo caracter y/o numericos son:\n");
-    recorreC=*cteC;
-    while(recorreC!=NULL){
-        printf("%s ", recorreC->nombre);
-        if(recorreC->tipo)
-            printf("%d\n", recorreC->valor);
-            else
-                printf("%c\n", recorreC->valor);
-        recorreC=recorreC->sig;
-    }
-    printf("Las constantes de tipo string son:\n");
 
-    recorreS=*constantesS;
-    while(recorreS!=NULL){
-        printf("%s almacena {%s} y ocupa %d espacios, de usarla sera reemplazada por el numero %d\n", recorreS->nombre, recorreS->valor, recorreS->tamanio, recorreS->bloque);
-        recorreS=recorreS->sig;
-    }*/
+    recorre=*simbolos;
+    while(recorre!=NULL){
+        printf("el simbolo %s aparece un total de %d veces\n", recorre->cadena, buscaSimbolo(*simbolos, recorre->cadena));
+        recorre=recorre->sig;
+    }
+    
     fclose(instasm);
 }
 

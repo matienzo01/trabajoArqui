@@ -17,6 +17,7 @@ int identificaBase(char dato){
 void agregarotulo(tlistaR *rotulos,char rotulo[],int numlinea){
     tlistaR aux;
     aux=(tlistaR)malloc(sizeof(nodoR));
+    strlwr(rotulo);
     aux->sig=*rotulos;
     strcpy(aux->rotulo,rotulo);
     aux->numerodelinea=numlinea;
@@ -30,6 +31,7 @@ void agregaConstante(tlistaES* constantesS, tlistaEC* ctesC,char nombre[] ,char 
     int base;
 
     int bandera; //0 significa numero, 1 significa caracter, 2 significa string
+    strlwr(nombre);
 
     if(*(valor)==39 || *(valor)==34) //39 es ' y 34 "
         if(*valor==39){
@@ -207,4 +209,23 @@ int buscaTipoCte(tlistaES constantesS, tlistaEC ctesC, char nombre[]){
         }
     }
     return respuesta;
+}
+
+int buscaSimbolo(tlistastring simbolos, char cadena[]){
+    int respuesta=0;
+    while(simbolos!=NULL){
+        if(strcasecmp(simbolos->cadena, cadena)==0)
+            respuesta++;
+        simbolos=simbolos->sig;
+    }
+    return respuesta;
+}
+
+void agregaSimbolos(tlistastring* simbolos, char cadena[]){
+    tlistastring aux;
+    aux=(tlistastring) malloc(sizeof(nodostring));
+    strlwr(cadena);
+    strcpy(aux->cadena, cadena);
+    aux->sig=*simbolos;
+    *simbolos=aux;
 }
