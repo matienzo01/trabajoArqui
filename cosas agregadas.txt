@@ -39,9 +39,13 @@
 24/05/2021
  - Se informa en la consola la declaracion de ctes
  - Solucionado problema: al escribir mal un mnemonico no cargaba constantes declaradas debajo
+ - agregaConstante ahora agrega duplicados ya que la definicion de duplicados ya no es su tarea, sino de la lista de simbolos
  - Implementado lista simbolos
      + A la hora de agregar un rotulo o cte se agrega a la lista de simbolos
      + buscaSimbolos retorna la cantidad de apariciones de un simbolos (sirve para encontrar duplicados)
- - Todos los simbolos se almacenan en minusculas para facilitar la busqueda
- - La consola imprime si una linea declara un rotulo o cte duplicadas
+     + Todos los simbolos se almacenan en minusculas para facilitar la busqueda
+     + Los rotulos ademas se almacenan sin el ':'
+ - La consola imprime si una linea declara un rotulo o cte duplicadas. Imprime con el nombre que se escribieron en el codigo, aunque en para la cuenta de apariciones se computan todos como si fueran minusculas
  - Si hay duplicados no se genera el .bin
+ - Si hay duplicados se genera un informe de duplicado
+ - En el paso de lectura 0 se almacena la cadena en una variable auxiliar por si en caso de ser un rotulo a la varaible auxiliar se le elimina el ':' para su busqueda

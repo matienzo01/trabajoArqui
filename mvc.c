@@ -156,6 +156,10 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
                                     (*errores)++;
                                     huboerror++;
                                     bandera=0; //no se imprime esta linea
+                                    if(cadena[strlen(cadena)-1]==':'){
+                                        agregainforme(informeserrores, "Se intento declarar un rotulo en la linea ", cantInstrucciones+1, " con el nombre de ", aux);
+                                    }else
+                                        agregainforme(informeserrores, "Se intento declarar una constante en la linea ", cantInstrucciones+1, " con el nombre de ", aux);
                                 }
                                 
                                 memset(cadena, 0, strlen(cadena));
@@ -281,11 +285,11 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistas
         recorreS=recorreS->sig;
     }
 
-    recorre=*simbolos;
+    /*recorre=*simbolos;
     while(recorre!=NULL){
         printf("el simbolo %s aparece un total de %d veces\n", recorre->cadena, buscaSimbolo(*simbolos, recorre->cadena));
         recorre=recorre->sig;
-    }
+    }*/
     
     fclose(instasm);
 }
