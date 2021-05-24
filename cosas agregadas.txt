@@ -43,3 +43,5 @@
      + A la hora de agregar un rotulo o cte se agrega a la lista de simbolos
      + buscaSimbolos retorna la cantidad de apariciones de un simbolos (sirve para encontrar duplicados)
  - Todos los simbolos se almacenan en minusculas para facilitar la busqueda
+ - La consola imprime si una linea declara un rotulo o cte duplicadas
+ - Si hay duplicados no se genera el .bin

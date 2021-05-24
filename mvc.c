@@ -55,9 +55,10 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
     return 0;
 }
 
-void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* errores,int *warnings,tlistastring *informeserrores,tlistastring *informeswarnings,int *maxmem){
+void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* errores,int *warnings,tlistastring *informeserrores,tlistastring *informeswarnings,int *maxmem){
     
     char linea[DIMS],cadena[DIMS]={'\0'};
+    char aux[50]={0}; //cadena que se utiliza para busqueda de simbolos
     int CS=-1;
     int cantArgumentos;
     int pasoDeLectura=0; 
@@ -67,6 +68,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
     int huboerror;
     int lineasininstruccion;
     int cantInstrucciones=-1; //vendria a ser un CS paralelo
+    int bandera; //solo se usa para saltear la impresion de una linea con simbolo duplicado
     registroinstruccion instruccion;
     tlistaR rotulos;
     tlistaES ctesString;
@@ -83,6 +85,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
         pasoDeLectura=0;
         i=0;
         huboerror=0;
+        bandera=parametro;
         lineasininstruccion=0;
         if(linea[0]==92){ //no me reconocia el caracter \ entonces le tuve q poner el valor en ASCII
             if(linea[1]==92){
@@ -101,21 +104,6 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                 j=-1;
                 while(linea[i]!=' ' && i<strlen(linea) && linea[i]!='\n' && linea[i]!=',' && linea[i]!=';')
                     cadena[++j]=linea[i++];
-                if(buscaConstante(ctesString, ctesCarac, cadena)!=0xFFFFFF){
-                    lineasininstruccion=1;
-                    pasoDeLectura=3;
-                    i=strlen(linea)+1;
-                    if(bandera){
-                        printf("Se declara la constante de nombre {%s} ", cadena);
-                        if(buscaTipoCte(ctesString, ctesCarac, cadena)==0 || buscaTipoCte(ctesString, ctesCarac, cadena)==1){
-                            printf("cuyo valor es de %d", buscaConstante(ctesString, ctesCarac, cadena));
-                        }else{
-                            printf("que se almacena en el bloque %d", buscaConstante(ctesString, ctesCarac, cadena));
-                        }
-                    }
-                    
-                    memset(cadena, 0, strlen(cadena));
-                }
                 if((linea[i]==';' || linea[i]=='\n' || linea[i]==92) && pasoDeLectura==0 && strlen(cadena)==0){//estaba buscando mnemonico y encontro comentario o linea en blanco   
                     if(linea[i]==';'){
                         instruccion.comentario[0]=linea[i];
@@ -125,7 +113,9 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                 }
                 switch (pasoDeLectura){
                     case 0:
-                            if(buscarotulo(rotulos,cadena)==0xFFF){
+                            strcpy(aux, cadena);
+                            eliminaCaracter(aux, ':');
+                            if(buscaSimbolo(simbolos, aux)==0){
                                 cantInstrucciones++;
                                 strcpy(instruccion.mnemonico,cadena);
                                 codmnemo=buscamnemonico(cadena);
@@ -143,10 +133,32 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
                                 pasoDeLectura=1;
                                 memset(cadena,0,strlen(cadena));
                             }
-                            else{//era un rotulo o una constante
-
-                                strcpy(instruccion.rotulo,cadena);
-                                memset(cadena,0,strlen(cadena));
+                            else{//era un rotulo o una declaracion de constante
+                                if(buscaSimbolo(simbolos, aux)==1){
+                                    if(buscaConstante(ctesString, ctesCarac, cadena)!=0xFFFFFF){
+                                        lineasininstruccion=1;
+                                        pasoDeLectura=3;
+                                        i=strlen(linea)+1;
+                                        if(parametro){
+                                            printf("Se declara la constante de nombre {%s} ", cadena);
+                                            if(buscaTipoCte(ctesString, ctesCarac, cadena)==0 || buscaTipoCte(ctesString, ctesCarac, cadena)==1){
+                                                printf("cuyo valor es de %d", buscaConstante(ctesString, ctesCarac, cadena));
+                                            }else{
+                                                printf("que se almacena en el bloque %d", buscaConstante(ctesString, ctesCarac, cadena));
+                                            }
+                                        }
+                                    }else{
+                                        strcpy(instruccion.rotulo,cadena);
+                                    }
+                                }else{
+                                    printf("El rotulo o constante declarada en esta linea se encuentra duplicado\n");
+                                    i=strlen(linea)+1;
+                                    (*errores)++;
+                                    huboerror++;
+                                    bandera=0; //no se imprime esta linea
+                                }
+                                
+                                memset(cadena, 0, strlen(cadena));
                             }
                         break;
                     case 1:
@@ -173,7 +185,7 @@ void traductor(FILE *instasm,int memoria[],int bandera, char archivo[], int* err
         }  
         if(!huboerror && !lineasininstruccion)
             generainstruccion(codmnemo,instruccion,&instruccionHexa,cantArgumentos,rotulos,errores,warnings,cantInstrucciones,informeserrores,informeswarnings);
-        if(bandera)
+        if(parametro && bandera)
             imprimeLineas(instruccion,cantInstrucciones,cantArgumentos,instruccionHexa,lineasininstruccion,huboerror);
         memoria[CS]=instruccionHexa;
         memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
