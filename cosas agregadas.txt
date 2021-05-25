@@ -53,3 +53,4 @@
  
  25/05/2021
   - Si se declaraba explicitamente los segmentos, no se cargaba adecuadamente el CS
+  - Correccion operandos indirectos
