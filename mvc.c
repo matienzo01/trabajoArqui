@@ -189,16 +189,20 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
             }
             ++i;
         }  
-        if(!huboerror && !lineasininstruccion)
+        if(!huboerror && !lineasininstruccion){
             generainstruccion(codmnemo,instruccion,&instruccionHexa,cantArgumentos,rotulos,errores,warnings,cantInstrucciones,informeserrores,informeswarnings,*ctesString,ctesCarac,simbolos,&huboerror);
+            memoria[4+cantInstrucciones]=instruccionHexa;
+        }
         if(bandera && parametro)
             imprimeLineas(instruccion,cantInstrucciones,cantArgumentos,instruccionHexa,lineasininstruccion,huboerror);
-        memoria[4+cantInstrucciones]=instruccionHexa;
         memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
     }
     if(*(memoria+1)==0)
         determinaSegmentos("\\", memoria , CS);
     *maxmem=CS+5;
+    for(int k=0; k<=3; k++){
+        printf("%x\n", memoria[k]);
+    }
     fclose(instasm);
 }
 
@@ -306,6 +310,9 @@ void determinaSegmentos(char* linea, int* memoria, int cs){
     char cadena[15]={'\0'};
 
     *(memoria+3)=cs;
+    for(int k=0; k<=3; k++){
+        printf("%x\n", memoria[k]);
+    }
     while(i<largo && *(linea+i)==' '){
         i++;
     }
@@ -363,6 +370,7 @@ void determinaSegmentos(char* linea, int* memoria, int cs){
             
         }   
     }
+    *(memoria+3)=cs;
     for(int z=0; z<=3; z++){
         if(*(memoria+z)==0){
             *(memoria+z)=1024; //si no se le asigno un valor, va el por defecto
@@ -565,12 +573,16 @@ void agregainforme(tlistastring *informe,char frase1[],int linea,char frase2[],c
 void generabin(int memoria[],char nombre[],FILE *instabin, int maxmem, tlistaES ctesString){
     int CS;//este vendria desde el main
     int header=1297494577;
+    int hexa;
     int aux;
     instabin=fopen(nombre,"wb");
     if(instabin!=NULL){
         fwrite(&header, sizeof(int), 1, instabin); //agrega la cabezera de la maquina virtual
-        for(int i=0;i<maxmem;i++)
-            fwrite((memoria+i),sizeof(memoria[i]),1,instabin);
+        for(int i=0;i<maxmem;i++){
+            hexa=memoria[i];
+            fwrite(&hexa,sizeof(memoria[i]),1,instabin);
+        }
+            
         while(ctesString!=NULL){
             for(int i=0; i<strlen(ctesString->valor); i++){
                 aux=ctesString->valor[i];

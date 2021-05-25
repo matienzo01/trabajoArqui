@@ -51,3 +51,5 @@
  - En el paso de lectura 0 se almacena la cadena en una variable auxiliar por si en caso de ser un rotulo a la varaible auxiliar se le elimina el ':' para su busqueda
  - Corregido error de desfasaje en la consola al haber linea en blanco
  
+ 25/05/2021
+  - Si se declaraba explicitamente los segmentos, no se cargaba adecuadamente el CS
