@@ -128,7 +128,7 @@ void muestramemoria(int memoria[]){//de prueba
     printf("\n\n\n");
     for(int i=0;i<=100;i++){
         printf("%x",memoria[i]);
-        if((i+1)%8==0)
+        //if((i+1)%8==0)
             printf("\n");
     }
 }

@@ -18,7 +18,7 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
     FILE *instasm;
     FILE *instbin;
     tlistastring informeserrores=NULL,informeswarnings=NULL;
-    int memoria[4096]={0},maxmem,parametro;
+    int memoria[8192]={0},maxmem,parametro;
     int errores=0,warnings=0;
     char aux[DIMS]={'\0'};
 
@@ -50,7 +50,8 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
         printf("No se genero el archivo %s ya que hubo errores en la traduccion.\n", argv[2]);
     printf("Warnings = %d \n",warnings);
     muestralista(informeswarnings);
-
+    printf("\n\n");
+    muestramemoria(memoria);
 
     return 0;
 }
@@ -108,7 +109,8 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
                     if(linea[i]==';'){
                         instruccion.comentario[0]=linea[i];
                         pasoDeLectura=2;
-                    }
+                    }else
+                        pasoDeLectura=3; //era una linea en blanco entonces seguimos a la sig linea
                     lineasininstruccion=1;
                 }
                 switch (pasoDeLectura){
@@ -191,7 +193,7 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
             generainstruccion(codmnemo,instruccion,&instruccionHexa,cantArgumentos,rotulos,errores,warnings,cantInstrucciones,informeserrores,informeswarnings,ctesString,ctesCarac,simbolos,&huboerror);
         if(bandera && parametro)
             imprimeLineas(instruccion,cantInstrucciones,cantArgumentos,instruccionHexa,lineasininstruccion,huboerror);
-        memoria[CS]=instruccionHexa;
+        memoria[4+cantInstrucciones]=instruccionHexa;
         memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
     }
     if(*(memoria+1)==0)
@@ -227,7 +229,7 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistas
         while(i<largo && linea[i]==' ')
             ++i;
         if(i<largo && linea[i]!=';'){//si no es una linea vacia o un comentario
-            while(i<largo && linea[i]!=' '){
+            while(i<largo && linea[i]!=' ' && linea[i]!='\n'){
                 cadena[indice++]=linea[i++];
             }
             if(buscamnemonico(cadena)!=0xFFF){ //si es un mnemonico
@@ -240,6 +242,8 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistas
                 agregaSimbolos(simbolos, cadena);
                 i=largo+1;
             }else{
+                if(*cadena==0 || *cadena==10)
+                    i=largo+1;
                 i++;
                 while(i<largo && linea[i]==' ')
                     ++i;
@@ -380,7 +384,7 @@ int buscarotulo(tlistaR rotulos,char rotulo[]){
 }
 
 int buscamnemonico(char mnemonico[]){
-    nombre mnemonicos[32]={"MOV","ADD","SUB","SWAP","MUL","DIV","CMP","SHL","SHR","AND","OR","XOR","SLEN", "SMOV", "SCMP", "SYS","JMP","JZ","JP","JN","JNZ","JNP","JNN","LDL","LDH","RND","NOT","PUSH","POP", "CALL","RET", "STOP"};
+    nombre mnemonicos[32]={"MOV","ADD","SUB","SWAP","MUL","DIV","CMP","SHL","SHR","AND","OR","XOR","SLEN", "SMOV", "SCMP", "SYS","JMP","JZ","JP","JN","JNZ","JNP","JNN","LDL","LDH","RND","NOT","PUSH","POP","CALL","RET","STOP"};
     int i=0;
     while(i<=32 && strcasecmp(mnemonico,mnemonicos[i])!=0)
         ++i;

@@ -16,4 +16,5 @@ OTRO:   cmp [20], 100 ;compara
         mov DX, 10
         not [30]
         sys %F ;print [10] en decimal
+        jmp otro
 FIN:    stop
