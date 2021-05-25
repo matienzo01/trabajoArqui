@@ -71,6 +71,7 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
     int cantInstrucciones=-1; //vendria a ser un CS paralelo
     int bandera; //solo se usa para saltear la impresion de una linea con simbolo duplicado
     registroinstruccion instruccion;
+    tlistaES recorre;
     tlistaR rotulos;
     tlistaEC ctesCarac;
     tlistastring simbolos;
@@ -195,8 +196,16 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
             imprimeLineas(instruccion,cantInstrucciones,cantArgumentos,instruccionHexa,lineasininstruccion,huboerror);
         memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
     }
+
+    recorre=*ctesString;
+    while(recorre!=NULL){
+        CS+=recorre->tamanio;
+        recorre=recorre->sig;
+    }
+        
     if(*(memoria+1)==0)
         determinaSegmentos("\\", memoria , CS);
+    *(memoria+3)=CS;
     *maxmem=CS+5;
     for(int k=0; k<=3; k++){
         printf("%x\n", memoria[k]);
