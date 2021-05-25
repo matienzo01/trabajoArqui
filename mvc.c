@@ -554,7 +554,7 @@ void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *inst
         *instruccionhexa=codigomnemo<<20 & 0xFFF00000;
     else 
         if(cantargumentos==1)
-            if (codigomnemo>240 && codigomnemo<248 && esrotulo)
+            if (codigomnemo>240 && codigomnemo<255 && esrotulo)
                 *instruccionhexa=codigomnemo<<24 & 0xFF000000 | 00<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | linearotulo & 0x00000FFF;
             else if(codigomnemo==0xF0)
                 *instruccionhexa=codigomnemo<<24 & 0xFF000000 | args[0] & 0x00000FFF;
