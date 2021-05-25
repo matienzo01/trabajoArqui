@@ -187,7 +187,7 @@ int buscaConstante(tlistaES constantesS, tlistaEC ctesC, char nombre[]){
 int buscaregistro(char registro[]){
     int i=0;
     nombre registros[16]={"DS","SS","ES","CS","HP","IP","SP","BP","CC","AC","AX","BX","CX","DX","EX","FX"};
-    while(strcasecmp(registro,registros[i])!=0)
+    while(i<=15 && strcasecmp(registro,registros[i])!=0)
         ++i;
     return i;
 }
