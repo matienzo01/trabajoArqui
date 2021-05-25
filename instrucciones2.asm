@@ -1,3 +1,5 @@
+    num equ 200
+    text equ "hola"
     MOV AX, %1
     MOV DX, 10
     MOV CX, 1
