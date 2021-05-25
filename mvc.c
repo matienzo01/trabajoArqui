@@ -1,7 +1,7 @@
 #include "secundarios.h"
 
 //proce y func para funcionar
-void traductor(FILE*,int[],int,char[],int*,int*,tlistastring*,tlistastring*, tlistaES* ,int*);
+void traductor(FILE*,int[],int,char[],int*,int*,tlistastring*,tlistastring*,int*);
 
 void preproceso(tlistaR*, tlistaES*, tlistaEC*, tlistastring*, char[], int*, int*);
 void determinaSegmentos(char*, int*, int);
@@ -12,16 +12,15 @@ int operandoindirecto(char[],int*,tlistastring*,int,tlistaES,tlistaEC,tlistastri
 void imprimeLineas(registroinstruccion,int,int,int,int,int);
 void generainstruccion(int,registroinstruccion,int*,int,tlistaR,int*,int*,int,tlistastring*,tlistastring*,tlistaES,tlistaEC,tlistastring,int*);
 void agregainforme(tlistastring*,char[],int,char[],char[]);
-void generabin(int[], char[], FILE*, int, tlistaES);
+void generabin(int[], char[], FILE*,int);
 
 int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q imprimir
     FILE *instasm;
     FILE *instbin;
     tlistastring informeserrores=NULL,informeswarnings=NULL;
-    int memoria[8192]={0},maxmem,parametro;
+    int memoria[4096]={0},maxmem,parametro;
     int errores=0,warnings=0;
     char aux[DIMS]={'\0'};
-    tlistaES ctesString=NULL;
 
     if(argc<3){ //si no le meti el archivo para levantar y/o el a generar, finaliza la ejecucucion
         printf("Cantidad de parametros minimos insuficientes");
@@ -39,25 +38,24 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
     else
         parametro= (strcmp(argv[3],"-o")==0)? 0:1; //chequea si tiene el -o
 
-    traductor(instasm,memoria,parametro,argv[1],&errores,&warnings,&informeserrores,&informeswarnings,&ctesString,&maxmem);
+    traductor(instasm,memoria,parametro,argv[1],&errores,&warnings,&informeserrores,&informeswarnings,&maxmem);
 
     printf("Errores = %d \n",errores);
     muestralista(informeserrores);
     if(errores==0){
-        generabin(memoria, argv[2],instbin,maxmem, ctesString);
+        generabin(memoria, argv[2],instbin,maxmem);
         printf("Se genero el binario con nombre %s\n", argv[2]);
     }
     else
         printf("No se genero el archivo %s ya que hubo errores en la traduccion.\n", argv[2]);
     printf("Warnings = %d \n",warnings);
     muestralista(informeswarnings);
-    printf("\n\n");
-    muestramemoria(memoria);
+
 
     return 0;
 }
 
-void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* errores, int *warnings, tlistastring *informeserrores, tlistastring *informeswarnings, tlistaES* ctesString,int *maxmem){
+void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* errores,int *warnings,tlistastring *informeserrores,tlistastring *informeswarnings,int *maxmem){
     
     char linea[DIMS],cadena[DIMS]={'\0'};
     char aux[50]={0}; //cadena que se utiliza para busqueda de simbolos
@@ -73,12 +71,13 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
     int bandera; //solo se usa para saltear la impresion de una linea con simbolo duplicado
     registroinstruccion instruccion;
     tlistaR rotulos;
+    tlistaES ctesString;
     tlistaEC ctesCarac;
     tlistastring simbolos;
 
     int argumentosCargados,codmnemo;
 
-    preproceso(&rotulos, ctesString, &ctesCarac, &simbolos, archivo, &CS, errores);    
+    preproceso(&rotulos, &ctesString, &ctesCarac, &simbolos, archivo, &CS, errores);    
     memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
 
     while(fgets(linea,DIMS,instasm)!=NULL){
@@ -109,8 +108,7 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
                     if(linea[i]==';'){
                         instruccion.comentario[0]=linea[i];
                         pasoDeLectura=2;
-                    }else
-                        pasoDeLectura=3; //era una linea en blanco entonces seguimos a la sig linea
+                    }
                     lineasininstruccion=1;
                 }
                 switch (pasoDeLectura){
@@ -137,16 +135,16 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
                             }
                             else{//era un rotulo o una declaracion de constante
                                 if(buscaSimbolo(simbolos, aux)==1){
-                                    if(buscaConstante(*ctesString, ctesCarac, cadena)!=0xFFFFFF){
+                                    if(buscaConstante(ctesString, ctesCarac, cadena)!=0xFFFFFF){
                                         lineasininstruccion=1;
                                         pasoDeLectura=3;
                                         i=strlen(linea)+1;
                                         if(parametro){
                                             printf("Se declara la constante de nombre {%s} ", cadena);
-                                            if(buscaTipoCte(*ctesString, ctesCarac, cadena)==0 || buscaTipoCte(*ctesString, ctesCarac, cadena)==1){
-                                                printf("cuyo valor es de %d", buscaConstante(*ctesString, ctesCarac, cadena));
+                                            if(buscaTipoCte(ctesString, ctesCarac, cadena)==0 || buscaTipoCte(ctesString, ctesCarac, cadena)==1){
+                                                printf("cuyo valor es de %d", buscaConstante(ctesString, ctesCarac, cadena));
                                             }else{
-                                                printf("que se almacena en el bloque %d", buscaConstante(*ctesString, ctesCarac, cadena));
+                                                printf("que se almacena en el bloque %d", buscaConstante(ctesString, ctesCarac, cadena));
                                             }
                                         }
                                     }else{
@@ -190,15 +188,15 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
             ++i;
         }  
         if(!huboerror && !lineasininstruccion)
-            generainstruccion(codmnemo,instruccion,&instruccionHexa,cantArgumentos,rotulos,errores,warnings,cantInstrucciones,informeserrores,informeswarnings,*ctesString,ctesCarac,simbolos,&huboerror);
+            generainstruccion(codmnemo,instruccion,&instruccionHexa,cantArgumentos,rotulos,errores,warnings,cantInstrucciones,informeserrores,informeswarnings,ctesString,ctesCarac,simbolos,&huboerror);
         if(bandera && parametro)
             imprimeLineas(instruccion,cantInstrucciones,cantArgumentos,instruccionHexa,lineasininstruccion,huboerror);
-        memoria[4+cantInstrucciones]=instruccionHexa;
+        memoria[CS]=instruccionHexa;
         memset(instruccion.rotulo,0,strlen(instruccion.rotulo));
     }
     if(*(memoria+1)==0)
         determinaSegmentos("\\", memoria , CS);
-    *maxmem=CS+5;
+    *maxmem=CS;
     fclose(instasm);
 }
 
@@ -229,7 +227,7 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistas
         while(i<largo && linea[i]==' ')
             ++i;
         if(i<largo && linea[i]!=';'){//si no es una linea vacia o un comentario
-            while(i<largo && linea[i]!=' ' && linea[i]!='\n'){
+            while(i<largo && linea[i]!=' '){
                 cadena[indice++]=linea[i++];
             }
             if(buscamnemonico(cadena)!=0xFFF){ //si es un mnemonico
@@ -242,8 +240,6 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistas
                 agregaSimbolos(simbolos, cadena);
                 i=largo+1;
             }else{
-                if(*cadena==0 || *cadena==10)
-                    i=largo+1;
                 i++;
                 while(i<largo && linea[i]==' ')
                     ++i;
@@ -384,7 +380,7 @@ int buscarotulo(tlistaR rotulos,char rotulo[]){
 }
 
 int buscamnemonico(char mnemonico[]){
-    nombre mnemonicos[32]={"MOV","ADD","SUB","SWAP","MUL","DIV","CMP","SHL","SHR","AND","OR","XOR","SLEN", "SMOV", "SCMP", "SYS","JMP","JZ","JP","JN","JNZ","JNP","JNN","LDL","LDH","RND","NOT","PUSH","POP","CALL","RET","STOP"};
+    nombre mnemonicos[32]={"MOV","ADD","SUB","SWAP","MUL","DIV","CMP","SHL","SHR","AND","OR","XOR","SLEN", "SMOV", "SCMP", "SYS","JMP","JZ","JP","JN","JNZ","JNP","JNN","LDL","LDH","RND","NOT","PUSH","POP", "CALL","RET", "STOP"};
     int i=0;
     while(i<=32 && strcasecmp(mnemonico,mnemonicos[i])!=0)
         ++i;
@@ -403,10 +399,10 @@ int operandoindirecto(char argumento[],int* errores,tlistastring* informeserrore
     if(argumento[3]==']') //era solo [AX] o [BX]
         retorno= 0x000 | numRegistro&0x00F;
     else{                //puede ser [AX+-algo]
-        int offset=1;
+        int offset=0;
         char extra[10];memset(extra,0,strlen(extra));               
         if(argumento[3]=='-')
-            offset=-1;
+            offset=1;
         int z=0; //argumento[4] ya tiene el primer caracter del offset
         int esNumero=1;
         while (z+4<=strlen(argumento) && argumento[4+z]!=']'){
@@ -562,22 +558,14 @@ void agregainforme(tlistastring *informe,char frase1[],int linea,char frase2[],c
     *informe=nuevo;
 }
 
-void generabin(int memoria[],char nombre[],FILE *instabin, int maxmem, tlistaES ctesString){
+void generabin(int memoria[],char nombre[],FILE *instabin,int maxmem){
     int CS;//este vendria desde el main
     int header=1297494577;
-    int aux;
     instabin=fopen(nombre,"wb");
     if(instabin!=NULL){
         fwrite(&header, sizeof(int), 1, instabin); //agrega la cabezera de la maquina virtual
         for(int i=0;i<maxmem;i++)
             fwrite((memoria+i),sizeof(memoria[i]),1,instabin);
-        while(ctesString!=NULL){
-            for(int i=0; i<strlen(ctesString->valor); i++){
-                aux=ctesString->valor[i];
-                fwrite(&aux, sizeof(int) , 1, instabin);
-            }
-            ctesString=ctesString->sig;
-        }     
     } 
-       
+        
 }
