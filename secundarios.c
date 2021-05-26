@@ -89,7 +89,7 @@ int codigooperando(char argumento[]){
         ++i;
     caracter=toupper(argumento[i]);
     if(caracter=='['){
-        if(argumento[i+1]>='0' && argumento[i+1]<='9')
+        if((argumento[i+1]>='0' && argumento[i+1]<='9') || (argumento[i+1]=='%' || argumento[i+1]=='@' || argumento[i+1]=='#' || argumento[i+1]==comilla[0]))
             return 2;
         else 
             return 3;
@@ -128,7 +128,7 @@ void muestramemoria(int memoria[]){//de prueba
     printf("\n\n\n");
     for(int i=0;i<=100;i++){
         printf("%x",memoria[i]);
-        //if((i+1)%8==0)
+        if((i+1)%8==0)
             printf("\n");
     }
 }
