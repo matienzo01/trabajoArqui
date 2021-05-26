@@ -464,7 +464,7 @@ int buscaargumento(char argumento[],int *errores,tlistastring* informeserrores,i
     }
     else{
         if(argumento[0]=='['){ //puede ser DIRECTO ejemplo [10] o puede ser INDIRECTO ejemplo [CX] o [BX+2]
-            if(argumento[1]>='0' && argumento[1]<='9')
+            if( (argumento[1]>='0' && argumento[1]<='9') || (argumento[i+1]=='%' || argumento[i+1]=='@' || argumento[i+1]=='#' || argumento[i+1]==39))
                 for(int i=1;i<strlen(argumento)-1;i++)
                     aux[i-1]=argumento[i];
             else
@@ -473,8 +473,10 @@ int buscaargumento(char argumento[],int *errores,tlistastring* informeserrores,i
         else
             strcpy(aux,argumento);//habia un for antes
         baseb=identificaBase(*aux);
-        if(baseb==10)
+        if(baseb==10){
+            eliminaCaracter(aux,'#');
             return atoi(aux);
+        }
         else if(baseb<=16)
             return basebtodecimal(aux,baseb);
         else{
@@ -552,11 +554,11 @@ void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *inst
     else 
         if(cantargumentos==1)
             if (codigomnemo>240 && codigomnemo<255 && esrotulo)
-                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | 00<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | linearotulo & 0x00000FFF;
+                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | 00<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | linearotulo & 0x0000FFFF;
             else if(codigomnemo==0xF0)
-                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | args[0] & 0x00000FFF;
+                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | args[0] & 0x0000FFFF;
             else
-                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | codoperando[0]<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | args[0] & 0x00000FFF;
+                *instruccionhexa=codigomnemo<<24 & 0xFF000000 | codoperando[0]<<22 & 0x00C00000 | (000000<<16 & 0x003F0000) | args[0] & 0x0000FFFF;
         else
             *instruccionhexa=codigomnemo<<28 & 0xF0000000 | codoperando[0]<<26 & 0x0C000000 | codoperando[1]<<24 & 0x03000000 | args[0]<<12 & 0x00FFF000 | args[1] & 0x00000FFF;
 }
