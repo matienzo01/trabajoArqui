@@ -200,7 +200,7 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
 
     recorre=*ctesString;
     while(recorre!=NULL){
-        CS+=recorre->tamanio;
+        CS+=recorre->tamanio+1;
         recorre=recorre->sig;
     }
         
