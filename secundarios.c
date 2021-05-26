@@ -107,8 +107,9 @@ int codigooperando(char argumento[]){
 
 int basebtodecimal(char cadena[],int baseb){
     int numero=0;
+    char aux[10];strcpy(aux,cadena);mayus(aux);
     for(int i=1;i<strlen(cadena);i++)
-        numero+=((int)cadena[i]-48-7*((int)cadena[i]>=65))*potencia(baseb,strlen(cadena)-(i+1));
+        numero+=((int)aux[i]-48-7*((int)aux[i]>=65))*potencia(baseb,strlen(aux)-(i+1));
     return numero;
 }
 

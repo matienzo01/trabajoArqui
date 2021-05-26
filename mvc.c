@@ -289,7 +289,7 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistas
             i=largo+1;
         }            
     }
-    
+    (*CS)++;
     recorreS=*constantesS;
     while(recorreS!=NULL){
         recorreS->bloque+=(*CS);
@@ -590,7 +590,7 @@ void generabin(int memoria[],char nombre[],FILE *instabin, tlistaES ctesString, 
         }
             
         while(ctesString!=NULL){
-            for(int i=0; i<strlen(ctesString->valor); i++){
+            for(int i=0; i<strlen(ctesString->valor)+1; i++){
                 aux=ctesString->valor[i];
                 fwrite(&aux, sizeof(int) , 1, instabin);
             }

@@ -1,25 +1,22 @@
-    mov ax,1
-    mov [0],ax
-    mov bx,[0]
-    sub ax,1
-    mov [1],ax
-    mov ex,[1]
-    sub ax,1
-    mov [2],ax
-    mov ex,[2]
-    mul ax,%ffff
-    sys 15;
-    mov [3],ax
-    mov fx,[3]
-    ldh 65535
-    ldl 65535
-    mov [4],ac
-    shr ac,32
-    mov cx, 1
-    shl cx, 31
-    shr cx, 31    
-    mov [5], cx
-    mov ax,9;
-    mov cx,6;
-    sys 2; 
-    stop
+ MOV AX, 1
+ MOV [0], AX
+ MOV BX, [0]
+ SUB AX, 1
+ MOV [1], AX
+ MOV EX, [1]
+ SUB AX, 1
+ MOV [2], AX
+ MOV EX, [2]
+ MUL AX, %ffff
+ MOV [3], AX
+ MOV FX, [3]
+ LDH 65535
+ LDL 65535
+ MOV [4], AC
+ SHR AC, 32
+ MOV CX, 1
+ SHL CX, 31
+ SHR CX, 31
+ MOV [5], CX
+ SYS %F
+ STOP
