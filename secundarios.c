@@ -77,7 +77,7 @@ void agregaConstante(tlistaES* constantesS, tlistaEC* ctesC,char nombre[] ,char 
             while(recorreS->sig!=NULL)
                 recorreS=recorreS->sig;
             recorreS->sig=auxS;
-            auxS->bloque=recorreS->bloque+recorreS->tamanio;
+            auxS->bloque=recorreS->bloque+recorreS->tamanio+1;
         }
     }
 }
