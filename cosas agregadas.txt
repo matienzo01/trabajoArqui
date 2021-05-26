@@ -55,3 +55,5 @@
   - Si se declaraba explicitamente los segmentos, no se cargaba adecuadamente el CS
   - Correccion operandos indirectos
   - Las ctes se suman la CS
+  - Ampliada la memoria a 8192
+  - Solucionado problema que RET y STOP no sumaban CS

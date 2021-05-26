@@ -19,7 +19,7 @@ int main(int argc, char* argv[]){ //implementar parametro y si esta se tiene q i
     FILE *instbin;
     tlistastring informeserrores=NULL,informeswarnings=NULL;
     tlistaES ctesString;
-    int memoria[4096]={0},maxmem,parametro;
+    int memoria[8192]={0},maxmem,parametro;
     int errores=0,warnings=0;
     char aux[DIMS]={'\0'};
 
@@ -207,9 +207,6 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
         determinaSegmentos("\\", memoria , CS);
     *(memoria+3)=CS;
     *maxmem=CS+5;
-    for(int k=0; k<=3; k++){
-        printf("%x\n", memoria[k]);
-    }
     fclose(instasm);
 }
 
@@ -315,9 +312,6 @@ void determinaSegmentos(char* linea, int* memoria, int cs){
     char cadena[15]={'\0'};
 
     *(memoria+3)=cs;
-    for(int k=0; k<=3; k++){
-        printf("%x\n", memoria[k]);
-    }
     while(i<largo && *(linea+i)==' '){
         i++;
     }
@@ -399,10 +393,13 @@ int buscarotulo(tlistaR rotulos,char rotulo[]){
 int buscamnemonico(char mnemonico[]){
     nombre mnemonicos[32]={"MOV","ADD","SUB","SWAP","MUL","DIV","CMP","SHL","SHR","AND","OR","XOR","SLEN", "SMOV", "SCMP", "SYS","JMP","JZ","JP","JN","JNZ","JNP","JNN","LDL","LDH","RND","NOT","PUSH","POP", "CALL","RET", "STOP"};
     int i=0;
-    while(i<=32 && strcasecmp(mnemonico,mnemonicos[i])!=0)
+    char aux[10];
+    strcpy(aux, mnemonico);
+    eliminaCaracter(aux, '\n');
+    while(i<=32 && strcasecmp(aux,mnemonicos[i])!=0)
         ++i;
     if(i<=32)
-        return i+(i>=14)*225+(i>=30)*3825;
+        return i+(i>=15)*225+(i>=30)*3825;
     else
         return 4095;
 }
