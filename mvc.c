@@ -414,10 +414,10 @@ int operandoindirecto(char argumento[],int* errores,tlistastring* informeserrore
     if(argumento[3]==']') //era solo [AX] o [BX]
         retorno= 0x000 | numRegistro&0x00F;
     else{                //puede ser [AX+-algo]
-        int offset=0;
+        int offset=1;
         char extra[10];memset(extra,0,strlen(extra));               
         if(argumento[3]=='-')
-            offset=1;
+            offset=-1;
         int z=0; //argumento[4] ya tiene el primer caracter del offset
         int esNumero=1;
         while (z+4<=strlen(argumento) && argumento[4+z]!=']'){
@@ -427,7 +427,7 @@ int operandoindirecto(char argumento[],int* errores,tlistastring* informeserrore
             z++;
         }
         if(esNumero)
-            offset= offset<<7 & 0x80 | atoi(extra) & 0x7F;
+            offset*=atoi(extra);
         else{ //se suma o resta una constante, en "extra" esta cargadas
             if(buscaSimbolo(simbolos,extra)>1)
                 *huboerror=1;
@@ -436,7 +436,7 @@ int operandoindirecto(char argumento[],int* errores,tlistastring* informeserrore
                 ++(*errores);
                 agregainforme(informeserrores,"En la instruccion ",CS," --> Simbolo Desconocido: ",extra);
             }
-            offset=offset<<7 & 0x80 | valorconst & 0x7F;
+            offset*=valorconst;
         }
         retorno= offset<<4 & 0xFF0 | numRegistro & 0x00F; 
     }
