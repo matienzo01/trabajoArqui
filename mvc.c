@@ -109,7 +109,8 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
                     if(linea[i]==';'){
                         instruccion.comentario[0]=linea[i];
                         pasoDeLectura=2;
-                    }
+                    }else
+                        pasoDeLectura=3;
                     lineasininstruccion=1;
                 }
                 switch (pasoDeLectura){
@@ -232,7 +233,7 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistas
         i=0;
         indice=0;
         memset(cadena, 0, strlen(cadena));
-        if(linea[0]==92 && linea[1]==92) //si es la linea del asm lo salto de una
+        if(linea[0]==92 && linea[1]==92 || linea[0]==10) //si es la linea del asm lo salto de una o si es un enter
             i=largo+1;
         while(i<largo && linea[i]==' ')
             ++i;

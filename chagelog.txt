@@ -58,3 +58,8 @@
   - Ampliada la memoria a 8192
   - Solucionado problema que RET y STOP no sumaban CS
   - Solucionado problema que las constantes no se guardaban al terminar los hexadecimales
+
+26/05/2021
+ - Linea en blanco se saltea por completo (correcion ej 3 del coloquio 1)
+ - El truncamiento puede ser de 12 o 16 bits (correcion ej 2)
+ - Correcciones a la interpretacion de simbolos de bases numericas (resto de ejercicios)
