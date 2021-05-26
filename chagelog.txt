@@ -57,3 +57,4 @@
   - Las ctes se suman la CS
   - Ampliada la memoria a 8192
   - Solucionado problema que RET y STOP no sumaban CS
+  - Solucionado problema que las constantes no se guardaban al terminar los hexadecimales
