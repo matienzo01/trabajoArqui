@@ -99,11 +99,11 @@ void traductor(FILE *instasm,int memoria[],int parametro, char archivo[], int* e
             }
         }
         while(i<strlen(linea)){
-            while(i<strlen(linea) && (linea[i]==' ' || linea[i]==','))
+            while(i<strlen(linea) && (linea[i]==' ' || linea[i]==',' || linea[i]==9))
                  i++;
             if(i<strlen(linea)){
                 j=-1;
-                while(linea[i]!=' ' && i<strlen(linea) && linea[i]!='\n' && linea[i]!=',' && linea[i]!=';')
+                while(linea[i]!=' ' && i<strlen(linea) && linea[i]!='\n' && linea[i]!=',' && linea[i]!=';' && linea[i]!=9)
                     cadena[++j]=linea[i++];
                 if((linea[i]==';' || linea[i]=='\n' || linea[i]==92) && pasoDeLectura==0 && strlen(cadena)==0){//estaba buscando mnemonico y encontro comentario o linea en blanco   
                     if(linea[i]==';'){
@@ -235,10 +235,10 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistas
         memset(cadena, 0, strlen(cadena));
         if(linea[0]==92 && linea[1]==92 || linea[0]==10) //si es la linea del asm lo salto de una o si es un enter
             i=largo+1;
-        while(i<largo && linea[i]==' ')
+        while(i<largo && (linea[i]==' ' || linea[i]==9))
             ++i;
         if(i<largo && linea[i]!=';'){//si no es una linea vacia o un comentario
-            while(i<largo && linea[i]!=' '){
+            while(i<largo && linea[i]!=' ' && linea[i]!=9){
                 cadena[indice++]=linea[i++];
             }
             if(buscamnemonico(cadena)!=0xFFF){ //si es un mnemonico
@@ -251,12 +251,11 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistas
                 agregaSimbolos(simbolos, cadena);
                 i=largo+1;
             }else{
-                i++;
-                while(i<largo && linea[i]==' ')
+                while(i<largo && (linea[i]==' ' || linea[i]==9))
                     ++i;
                 if(i<largo){
                     j=0;
-                    while(i<largo && linea[i]!=' '){
+                    while(i<largo && linea[i]!=' ' && linea[i]!=9){
                         aux[j++]=linea[i++];
                     }
                     if(strcasecmp(aux, "equ")==0){
@@ -276,11 +275,11 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistas
                         agregaSimbolos(simbolos, cadena);   
                         memset(aux, 0, strlen(aux));
                     }else{
-                        printf("Simbolo desconocido\n");//-----------------------------------------------------------simbolo desconocido
+                        printf("Simbolo desconocido n1\n");//-----------------------------------------------------------simbolo desconocido
                         memset(aux, 0, strlen(aux));
                     }
                 }else{
-                    printf("Simbolo desconocido\n");//----------------------------------------------------------------simbolo desconocido
+                    printf("Simbolo desconocido n2\n");//----------------------------------------------------------------simbolo desconocido
                 }
             }
                 
@@ -289,13 +288,13 @@ void preproceso(tlistaR *rotulos, tlistaES* constantesS, tlistaEC* cteC, tlistas
             i=largo+1;
         }            
     }
-    (*CS)++;
+    
     recorreS=*constantesS;
     while(recorreS!=NULL){
         recorreS->bloque+=(*CS);
         recorreS=recorreS->sig;
     }
-
+    (*CS)++;
     recorre=*simbolos;
     while(recorre!=NULL){
         printf("el simbolo %s aparece un total de %d veces\n", recorre->cadena, buscaSimbolo(*simbolos, recorre->cadena));
@@ -409,13 +408,14 @@ int operandoindirecto(char argumento[],int* errores,tlistastring* informeserrore
     char reg[3];
     reg[0]=argumento[1];
     reg[1]=argumento[2];
+    reg[2]='\0';
     int numRegistro=buscaregistro(reg);
     int retorno;
     if(argumento[3]==']') //era solo [AX] o [BX]
         retorno= 0x000 | numRegistro&0x00F;
     else{                //puede ser [AX+-algo]
         int offset=1;
-        char extra[10];memset(extra,0,strlen(extra));               
+        char extra[30];memset(extra,0,strlen(extra));               
         if(argumento[3]=='-')
             offset=-1;
         int z=0; //argumento[4] ya tiene el primer caracter del offset
@@ -447,15 +447,23 @@ int buscaargumento(char argumento[],int *errores,tlistastring* informeserrores,i
     int i=0,baseb;
     char aux[MAX];memset(aux,0,strlen(aux));
     char aux2[MAX];strcpy(aux2,argumento);
+    char aux3[MAX];
+    int bandera=0;
+
+    strcpy(aux3, argumento);
+    eliminaCaracter(aux3, '[');
+    eliminaCaracter(aux3, ']');
+    bandera=buscaConstante(ctesString, ctesCarac, aux3)!=0xFFFFFF;
+
     mayus(aux2);
-    if(aux2[0]>='A' && aux2[0]<='Z'){ //el argumento es una constante
+    if((aux2[0]>='A' && aux2[0]<='Z') || bandera){ //el argumento es una constante
         int valor=buscaregistro(aux2);
         if(valor<=15)
             return valor;
         else{
             if(buscaSimbolo(simbolos,argumento)>1)
                 *huboerror=1;
-            valor=buscaConstante(ctesString,ctesCarac,argumento);
+            valor=buscaConstante(ctesString,ctesCarac,aux3);
             if(valor==0xFFFFFF){
                 ++(*errores);
                 agregainforme(informeserrores,"En la instruccion ",CS," --> Simbolo Desconocido: ",argumento);
@@ -464,8 +472,8 @@ int buscaargumento(char argumento[],int *errores,tlistastring* informeserrores,i
         }
     }
     else{
-        if(argumento[0]=='['){ //puede ser DIRECTO ejemplo [10] o puede ser INDIRECTO ejemplo [CX] o [BX+2]
-            if( (argumento[1]>='0' && argumento[1]<='9') || (argumento[i+1]=='%' || argumento[i+1]=='@' || argumento[i+1]=='#' || argumento[i+1]==39))
+        if(argumento[0]=='[' ){ //puede ser DIRECTO ejemplo [10] o puede ser INDIRECTO ejemplo [CX] o [BX+2]
+            if( (argumento[1]>='0' && argumento[1]<='9') || (argumento[i+1]=='%' || argumento[i+1]=='@' || argumento[i+1]=='#' || argumento[i+1]==39 || bandera))
                 for(int i=1;i<strlen(argumento)-1;i++)
                     aux[i-1]=argumento[i];
             else
@@ -524,15 +532,28 @@ void generainstruccion(int codigomnemo,registroinstruccion instruccion,int *inst
     int i,linearotulo,esrotulo;
     int codoperando[3];
     long int args[3];
+    char aux[MAX];
+
+    
+
     for(int i=0;i<cantargumentos;i++){
-        if(buscaConstante(ctesString,ctesCarac,instruccion.argumentos[i])==0xFFFFFF)
+        if(buscaConstante(ctesString,ctesCarac,instruccion.argumentos[i])==0xFFFFFF){
             codoperando[i]=codigooperando(instruccion.argumentos[i]);
+            strcpy(aux, instruccion.argumentos[i]);
+            eliminaCaracter(aux, '[');
+            eliminaCaracter(aux, ']');
+            if(buscaConstante(ctesString,ctesCarac,aux)!=0xFFFFFF)
+                codoperando[i]=2;
+        }
+            
         else
-            if(esString(ctesString,instruccion.argumentos[i]))
-                codoperando[i]=3;
+            if(esString(ctesString,instruccion.argumentos[i])){
+                //codoperando[i]=3;
+                codoperando[i]=0;
+            }
             else
                 codoperando[i]=2;
-        esrotulo=codoperando[i]==0 && toupper(instruccion.argumentos[i][0])>='A' && toupper(instruccion.argumentos[i][0])<='Z';
+        esrotulo=codoperando[i]==0 && toupper(instruccion.argumentos[i][0])>='A' && toupper(instruccion.argumentos[i][0])<='Z' && !esString(ctesString,instruccion.argumentos[i]);
         if(!esrotulo){
             args[i]=buscaargumento(instruccion.argumentos[i],errores,informeserrores,CS,ctesString,ctesCarac,simbolos,huboerror);
             //args[i]=buscaargumento(instruccion.argumentos[i],errores,informeserrores,CS,ctesString,ctesCarac,simbolos,huboerror);//--no borrar

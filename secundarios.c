@@ -50,7 +50,11 @@ void agregaConstante(tlistaES* constantesS, tlistaEC* ctesC,char nombre[] ,char 
         if(bandera)
             auxC->valor= (int) (*valor);
         else{
-            base=identificaBase(*valor);
+            eliminaCaracter(valor, 9);
+            if((*valor)==45)
+                base=10;
+                else
+                    base=identificaBase(*valor);
             if(base!=10 || *valor=='#')
                 auxC->valor= basebtodecimal(valor, base);
             else
@@ -85,6 +89,7 @@ void agregaConstante(tlistaES* constantesS, tlistaEC* ctesC,char nombre[] ,char 
 int codigooperando(char argumento[]){ 
     char caracter,comilla[2]="'";
     int i=0;
+    
     while(argumento[i]!='[' && comilla[0]!=argumento[i] && (argumento[i]<'0' || argumento[i]>'9') && (toupper(argumento[i])<'A' || toupper(argumento[i])>'Z'))
         ++i;
     caracter=toupper(argumento[i]);

@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #define DIMS 100
-#define MAX 10
+#define MAX 30
 
 typedef struct nodostring{
     char cadena[DIMS];
@@ -16,7 +16,7 @@ typedef char nombre[MAX];
 typedef struct{
     char rotulo[DIMS];
     char mnemonico[MAX];
-    nombre argumentos[10]; //22/05 - le cambie de 4 a  10, mas tamaño para los operandos indirectos
+    nombre argumentos[30]; //22/05 - le cambie de 4 a  10, mas tamaño para los operandos indirectos
     char comentario[DIMS];
 }registroinstruccion;
 
